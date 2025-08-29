@@ -3,34 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Community | Calm Companion</title>
+    <title>👥 Community | Calm Companion</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#4A7C59">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 </head>
 <body>
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <h1>🌿 Calm Companion</h1>
+                <div class="header-left">
+                    <h1>🌿 Calm Companion</h1>
+                    <p class="header-subtitle">Community & Support</p>
+                </div>
                 <div class="user-info">
-                    <span id="user-email"></span>
-                    <a href="index.html" class="profile-link">Chat</a>
-                    <a href="meditation.html" class="profile-link">Meditate</a>
-                    <a href="profile.html" class="profile-link">Profile</a>
-                    <button onclick="logout()" class="logout-btn">Logout</button>
+                    <span id="user-email" class="user-email"></span>
+                    <div class="nav-links">
+                        <a href="index.html" class="nav-link" title="Chat">
+                            <span class="nav-icon">💬</span>
+                            <span class="nav-text">Chat</span>
+                        </a>
+                        <a href="meditation.html" class="nav-link" title="Meditation">
+                            <span class="nav-icon">🧘</span>
+                            <span class="nav-text">Meditate</span>
+                        </a>
+                        <a href="profile.html" class="nav-link" title="Profile">
+                            <span class="nav-icon">👤</span>
+                            <span class="nav-text">Profile</span>
+                        </a>
+                        <button onclick="logout()" class="logout-btn" title="Sign Out">
+                            <span class="nav-icon">🚪</span>
+                            <span class="nav-text">Logout</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Community Content -->
         <div class="community-container">
-            <h2>Community Feed</h2>
-            <div class="feed-container" id="community-feed">
-                <!-- Posts will be loaded here dynamically -->
+            <div class="community-card fade-in">
+                <h2>👥 Community Feed</h2>
+                
+                <!-- Create Post Section -->
+                <div class="create-post-section">
+                    <h3>💭 Share Your Journey</h3>
+                    <div class="post-form">
+                        <textarea 
+                            id="post-content" 
+                            placeholder="Share your thoughts, experiences, or ask for advice..."
+                            rows="4"
+                            maxlength="500"
+                        ></textarea>
+                        <div class="post-actions">
+                            <span class="char-count" id="char-count">0/500</span>
+                            <button id="create-post-btn" class="primary-btn">
+                                <span class="btn-text">Share Post</span>
+                                <span class="btn-loading" style="display: none;">
+                                    <div class="loading-spinner"></div>
+                                    Sharing...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Community Stats -->
+                <div class="community-stats">
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-members">1,247</span>
+                        <span class="stat-label">Community Members</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-posts">3,891</span>
+                        <span class="stat-label">Posts Shared</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="active-today">156</span>
+                        <span class="stat-label">Active Today</span>
+                    </div>
+                </div>
+
+                <!-- Feed Container -->
+                <div class="feed-container" id="community-feed">
+                    <!-- Posts will be loaded here dynamically -->
+                    <div class="loading-posts">
+                        <div class="loading-spinner"></div>
+                        <p>Loading community posts...</p>
+                    </div>
+                </div>
+
+                <!-- Community Guidelines -->
+                <div class="guidelines-section">
+                    <h3>🤝 Community Guidelines</h3>
+                    <div class="guidelines-grid">
+                        <div class="guideline-card">
+                            <div class="guideline-icon">💙</div>
+                            <h4>Be Kind & Supportive</h4>
+                            <p>Treat everyone with respect and offer encouragement</p>
+                        </div>
+                        <div class="guideline-card">
+                            <div class="guideline-icon">🔒</div>
+                            <h4>Respect Privacy</h4>
+                            <p>Don't share personal information about yourself or others</p>
+                        </div>
+                        <div class="guideline-card">
+                            <div class="guideline-icon">🌱</div>
+                            <h4>Share Positively</h4>
+                            <p>Focus on growth, learning, and positive experiences</p>
+                        </div>
+                        <div class="guideline-card">
+                            <div class="guideline-icon">🤝</div>
+                            <h4>Support Each Other</h4>
+                            <p>Offer help and celebrate each other's progress</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="community-footer">
+                    <p>Together we grow stronger! Thank you for being part of our supportive community. 🌿</p>
+                </div>
             </div>
         </div>
     </div>
+
+    <style>
+        .community-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: var(--space-8);
+            background: var(--gradient-background);
+            overflow-y: auto;
+        }
+
+        .community-card {
+            background: var(--gradient-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: var(--space-12);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+            max-width: 800px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .community-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .community-card h2 {
+            margin-bottom: var(--space-8);
+            color: var(--color-primary-dark);
+            font-weight: 700;
+            font-size: var(--text-3xl);
+            text-align: center;
+        }
+
+        .create-post-section {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin-bottom: var(--space-8);
+        }
+
+        .create-post-section h3 {
+            margin-bottom: var(--space-4);
+            color: var(--color-primary-dark);
+            font-weight: 600;
+            font-size: var(--text-xl);
+        }
+
+        .post-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .post-form textarea {
+            width: 100%;
+            padding: var(--space-4) var(--space-5);
+            border: 2px solid var(--color-gray);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            transition: all var(--transition-normal);
+            font-family: inherit;
+            background: var(--color-white);
+            box-shadow: var(--shadow-sm);
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .post-form textarea:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .char-count {
+            font-size: var(--text-sm);
+            color: var(--color-medium-gray);
+            font-weight: 500;
+        }
+
+        .primary-btn {
+            background: var(--gradient-primary);
+            color: var(--color-white);
+            border: none;
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-normal);
+            font-size: var(--text-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .primary-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .primary-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .community-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-8);
+        }
+
+        .stat-card {
+            background: var(--gradient-card);
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            transition: all var(--transition-normal);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-number {
+            display: block;
+            font-size: var(--text-2xl);
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--space-2);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: var(--text-xs);
+            color: var(--color-medium-gray);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .feed-container {
+            margin-bottom: var(--space-8);
+        }
+
+        .loading-posts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-4);
+            padding: var(--space-8);
+            color: var(--color-medium-gray);
+        }
+
+        .guidelines-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .guidelines-section h3 {
+            margin-bottom: var(--space-6);
+            color: var(--color-primary-dark);
+            font-weight: 600;
+            font-size: var(--text-xl);
+            text-align: center;
+        }
+
+        .guidelines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+        }
+
+        .guideline-card {
+            background: var(--gradient-card);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            text-align: center;
+            transition: all var(--transition-normal);
+        }
+
+        .guideline-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .guideline-icon {
+            font-size: var(--text-2xl);
+            margin-bottom: var(--space-3);
+        }
+
+        .guideline-card h4 {
+            color: var(--color-primary-dark);
+            font-weight: 600;
+            margin-bottom: var(--space-2);
+            font-size: var(--text-base);
+        }
+
+        .guideline-card p {
+            color: var(--color-dark-gray);
+            font-size: var(--text-sm);
+            line-height: 1.5;
+        }
+
+        .community-footer {
+            text-align: center;
+            color: var(--color-medium-gray);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--color-gray);
+        }
+
+        @media (max-width: 768px) {
+            .community-container {
+                padding: var(--space-4);
+            }
+            
+            .community-card {
+                padding: var(--space-8);
+            }
+
+            .community-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .guidelines-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .post-actions {
+                flex-direction: column;
+                gap: var(--space-3);
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .community-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 
     <script src="community.js"></script>
 </body>

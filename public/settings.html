@@ -3,48 +3,345 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings | Calm Companion</title>
+    <title>⚙️ Settings | Calm Companion</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#4A7C59">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 </head>
 <body>
     <div class="app-container">
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <h1>🌿 Calm Companion</h1>
+                <div class="header-left">
+                    <h1>🌿 Calm Companion</h1>
+                    <p class="header-subtitle">Settings & Preferences</p>
+                </div>
                 <div class="user-info">
-                    <span id="user-email"></span>
-                    <a href="index.html" class="profile-link">Chat</a>
-                    <a href="meditation.html" class="profile-link">Meditate</a>
-                    <a href="profile.html" class="profile-link">Profile</a>
-                    <button onclick="logout()" class="logout-btn">Logout</button>
+                    <span id="user-email" class="user-email"></span>
+                    <div class="nav-links">
+                        <a href="index.html" class="nav-link" title="Chat">
+                            <span class="nav-icon">💬</span>
+                            <span class="nav-text">Chat</span>
+                        </a>
+                        <a href="meditation.html" class="nav-link" title="Meditation">
+                            <span class="nav-icon">🧘</span>
+                            <span class="nav-text">Meditate</span>
+                        </a>
+                        <a href="profile.html" class="nav-link" title="Profile">
+                            <span class="nav-icon">👤</span>
+                            <span class="nav-text">Profile</span>
+                        </a>
+                        <button onclick="logout()" class="logout-btn" title="Sign Out">
+                            <span class="nav-icon">🚪</span>
+                            <span class="nav-text">Logout</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Settings Content -->
         <div class="settings-container">
-            <h2>User Settings</h2>
-            <div class="settings-form">
-                <div class="form-group">
-                    <label for="notifications">Email Notifications</label>
-                    <select id="notifications" name="notifications">
-                        <option value="enabled">Enabled</option>
-                        <option value="disabled">Disabled</option>
-                    </select>
+            <div class="settings-card fade-in">
+                <h2>⚙️ Settings & Preferences</h2>
+                
+                <div class="settings-form">
+                    <div class="settings-section">
+                        <h3>🔔 Notifications</h3>
+                        <div class="form-group">
+                            <label for="notifications">Email Notifications</label>
+                            <select id="notifications" name="notifications" class="settings-select">
+                                <option value="enabled">Enabled</option>
+                                <option value="disabled">Disabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="notification-frequency">Notification Frequency</label>
+                            <select id="notification-frequency" name="notification-frequency" class="settings-select">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>🎨 Appearance</h3>
+                        <div class="form-group">
+                            <label for="theme">App Theme</label>
+                            <select id="theme" name="theme" class="settings-select">
+                                <option value="light">Light Theme</option>
+                                <option value="dark">Dark Theme</option>
+                                <option value="auto">Auto (System)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="font-size">Font Size</label>
+                            <select id="font-size" name="font-size" class="settings-select">
+                                <option value="small">Small</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="large">Large</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>🔒 Privacy & Security</h3>
+                        <div class="form-group">
+                            <label for="data-sharing">Data Sharing</label>
+                            <select id="data-sharing" name="data-sharing" class="settings-select">
+                                <option value="minimal">Minimal</option>
+                                <option value="standard" selected>Standard</option>
+                                <option value="enhanced">Enhanced</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="session-timeout">Session Timeout</label>
+                            <select id="session-timeout" name="session-timeout" class="settings-select">
+                                <option value="15">15 minutes</option>
+                                <option value="30" selected>30 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="never">Never</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>🧘 Meditation Preferences</h3>
+                        <div class="form-group">
+                            <label for="default-meditation-time">Default Meditation Time</label>
+                            <select id="default-meditation-time" name="default-meditation-time" class="settings-select">
+                                <option value="5">5 minutes</option>
+                                <option value="10" selected>10 minutes</option>
+                                <option value="15">15 minutes</option>
+                                <option value="20">20 minutes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ambient-sounds">Default Ambient Sounds</label>
+                            <select id="ambient-sounds" name="ambient-sounds" class="settings-select">
+                                <option value="none">None</option>
+                                <option value="rain" selected>Rain</option>
+                                <option value="forest">Forest</option>
+                                <option value="ocean">Ocean</option>
+                                <option value="fire">Fire</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button id="save-settings-btn" class="primary-btn">
+                            <span class="btn-text">Save Settings</span>
+                            <span class="btn-loading" style="display: none;">
+                                <div class="loading-spinner"></div>
+                                Saving...
+                            </span>
+                        </button>
+                        <button id="reset-settings-btn" class="secondary-btn">Reset to Defaults</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="theme">App Theme</label>
-                    <select id="theme" name="theme">
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                    </select>
+
+                <div class="settings-footer">
+                    <p>Your settings are automatically saved and synced across all your devices. 🌿</p>
                 </div>
-                <button id="save-settings-btn" class="primary-btn">Save Settings</button>
             </div>
         </div>
     </div>
+
+    <style>
+        .settings-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: var(--space-8);
+            background: var(--gradient-background);
+            overflow-y: auto;
+        }
+
+        .settings-card {
+            background: var(--gradient-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: var(--space-12);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+            max-width: 700px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .settings-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .settings-card h2 {
+            margin-bottom: var(--space-8);
+            color: var(--color-primary-dark);
+            font-weight: 700;
+            font-size: var(--text-3xl);
+            text-align: center;
+        }
+
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .settings-section {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .settings-section h3 {
+            margin-bottom: var(--space-6);
+            color: var(--color-primary-dark);
+            font-weight: 600;
+            font-size: var(--text-xl);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--color-primary-dark);
+            font-size: var(--text-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .settings-select {
+            padding: var(--space-4) var(--space-5);
+            border: 2px solid var(--color-gray);
+            border-radius: var(--radius-lg);
+            font-size: var(--text-base);
+            transition: all var(--transition-normal);
+            background: var(--color-white);
+            box-shadow: var(--shadow-sm);
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .settings-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: var(--space-4);
+            justify-content: center;
+            margin-top: var(--space-8);
+        }
+
+        .primary-btn {
+            background: var(--gradient-primary);
+            color: var(--color-white);
+            border: none;
+            padding: var(--space-4) var(--space-8);
+            border-radius: var(--radius-xl);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-normal);
+            font-size: var(--text-base);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .primary-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .primary-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .secondary-btn {
+            background: var(--gradient-card);
+            border: 2px solid var(--color-primary);
+            color: var(--color-primary-dark);
+            padding: var(--space-4) var(--space-8);
+            border-radius: var(--radius-xl);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-normal);
+            font-size: var(--text-base);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .secondary-btn:hover {
+            background: var(--color-primary);
+            color: var(--color-white);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .settings-footer {
+            margin-top: var(--space-8);
+            text-align: center;
+            color: var(--color-medium-gray);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--color-gray);
+        }
+
+        @media (max-width: 768px) {
+            .settings-container {
+                padding: var(--space-4);
+            }
+            
+            .settings-card {
+                padding: var(--space-8);
+            }
+
+            .settings-actions {
+                flex-direction: column;
+            }
+
+            .form-group {
+                margin-bottom: var(--space-4);
+            }
+        }
+    </style>
 
     <script src="settings.js"></script>
 </body>

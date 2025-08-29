@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Progress Analytics | Calm Companion</title>
+    <title>📊 Progress Analytics | Calm Companion</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#4A7C59">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -13,31 +15,331 @@
         <!-- Header -->
         <header class="app-header">
             <div class="header-content">
-                <h1>🌿 Calm Companion</h1>
+                <div class="header-left">
+                    <h1>🌿 Calm Companion</h1>
+                    <p class="header-subtitle">Progress Analytics</p>
+                </div>
                 <div class="user-info">
-                    <span id="user-email"></span>
-                    <a href="index.html" class="profile-link">Chat</a>
-                    <a href="meditation.html" class="profile-link">Meditate</a>
-                    <button onclick="logout()" class="logout-btn">Logout</button>
+                    <span id="user-email" class="user-email"></span>
+                    <div class="nav-links">
+                        <a href="index.html" class="nav-link" title="Chat">
+                            <span class="nav-icon">💬</span>
+                            <span class="nav-text">Chat</span>
+                        </a>
+                        <a href="meditation.html" class="nav-link" title="Meditation">
+                            <span class="nav-icon">🧘</span>
+                            <span class="nav-text">Meditate</span>
+                        </a>
+                        <a href="profile.html" class="nav-link" title="Profile">
+                            <span class="nav-icon">👤</span>
+                            <span class="nav-text">Profile</span>
+                        </a>
+                        <button onclick="logout()" class="logout-btn" title="Sign Out">
+                            <span class="nav-icon">🚪</span>
+                            <span class="nav-text">Logout</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </header>
 
         <!-- Analytics Content -->
         <div class="analytics-container">
-            <h2>Your Progress Analytics</h2>
-            <div class="charts-container">
-                <div class="chart-card">
-                    <h3>Conversation Goals</h3>
-                    <canvas id="goals-chart"></canvas>
+            <div class="analytics-card fade-in">
+                <h2>📊 Your Progress Analytics</h2>
+                
+                <!-- Quick Stats -->
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-sessions">0</span>
+                        <span class="stat-label">Total Sessions</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="avg-duration">0</span>
+                        <span class="stat-label">Avg. Duration (min)</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="streak-days">0</span>
+                        <span class="stat-label">Current Streak</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="total-time">0</span>
+                        <span class="stat-label">Total Time (hrs)</span>
+                    </div>
                 </div>
-                <div class="chart-card">
-                    <h3>Session Duration</h3>
-                    <canvas id="duration-chart"></canvas>
+
+                <!-- Charts Container -->
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>🎯 Conversation Goals Distribution</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="goals-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>⏱️ Session Duration Trends</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="duration-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>📈 Weekly Activity</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="activity-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>🌱 Growth Progress</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="progress-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insights Section -->
+                <div class="insights-section">
+                    <h3>💡 Insights & Recommendations</h3>
+                    <div class="insights-grid" id="insights-grid">
+                        <div class="insight-card">
+                            <div class="insight-icon">🎯</div>
+                            <h4>Goal Achievement</h4>
+                            <p>You're making great progress with emotional support conversations!</p>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">⏰</div>
+                            <h4>Consistency</h4>
+                            <p>Try to maintain your daily meditation practice for better results.</p>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-icon">📈</div>
+                            <h4>Growth</h4>
+                            <p>Your conversation skills have improved by 25% this month!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="analytics-footer">
+                    <p>Track your wellness journey and celebrate your progress! 🌿</p>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+        .analytics-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: var(--space-8);
+            background: var(--gradient-background);
+            overflow-y: auto;
+        }
+
+        .analytics-card {
+            background: var(--gradient-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: var(--space-12);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
+            max-width: 1200px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analytics-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .analytics-card h2 {
+            margin-bottom: var(--space-8);
+            color: var(--color-primary-dark);
+            font-weight: 700;
+            font-size: var(--text-3xl);
+            text-align: center;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+            margin-bottom: var(--space-12);
+        }
+
+        .stat-card {
+            background: var(--gradient-card);
+            padding: var(--space-8);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            transition: all var(--transition-normal);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .stat-number {
+            display: block;
+            font-size: var(--text-4xl);
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: var(--space-2);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: var(--text-sm);
+            color: var(--color-medium-gray);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: var(--space-8);
+            margin-bottom: var(--space-12);
+        }
+
+        .chart-card {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .chart-card h3 {
+            margin-bottom: var(--space-6);
+            color: var(--color-primary-dark);
+            font-weight: 600;
+            font-size: var(--text-xl);
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .insights-section {
+            margin-bottom: var(--space-8);
+        }
+
+        .insights-section h3 {
+            margin-bottom: var(--space-6);
+            color: var(--color-primary-dark);
+            font-weight: 600;
+            font-size: var(--text-xl);
+            text-align: center;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .insight-card {
+            background: var(--gradient-card);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            text-align: center;
+            transition: all var(--transition-normal);
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .insight-icon {
+            font-size: var(--text-3xl);
+            margin-bottom: var(--space-4);
+        }
+
+        .insight-card h4 {
+            color: var(--color-primary-dark);
+            font-weight: 600;
+            margin-bottom: var(--space-3);
+            font-size: var(--text-lg);
+        }
+
+        .insight-card p {
+            color: var(--color-dark-gray);
+            font-size: var(--text-sm);
+            line-height: 1.6;
+        }
+
+        .analytics-footer {
+            text-align: center;
+            color: var(--color-medium-gray);
+            font-size: var(--text-sm);
+            font-weight: 500;
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--color-gray);
+        }
+
+        @media (max-width: 768px) {
+            .analytics-container {
+                padding: var(--space-4);
+            }
+            
+            .analytics-card {
+                padding: var(--space-8);
+            }
+
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 
     <script src="analytics.js"></script>
 </body>

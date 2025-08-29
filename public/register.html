@@ -4,29 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Create your Calm Companion account - Start your wellness journey">
-    <title>Register | Calm Companion</title>
+    <title>🌿 Register | Calm Companion</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#4A7C59">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 </head>
 <body>
-    <div class="form-container">
+    <div class="form-container fade-in">
         <div class="form-header">
             <h1>🌿 Join Calm Companion</h1>
-            <p>Create your account and start your wellness journey</p>
+            <p>Create your account and begin your journey to inner peace</p>
         </div>
         
         <form id="register-form" class="auth-form">
             <div class="form-group">
-                <label for="register-email">Email</label>
+                <label for="register-email">Email Address</label>
                 <input 
                     type="email" 
                     id="register-email" 
                     name="email"
-                    placeholder="Enter your email" 
+                    placeholder="Enter your email address" 
                     required
                     autocomplete="email"
                 >
+                <div class="field-error"></div>
             </div>
             
             <div class="form-group">
@@ -35,10 +37,11 @@
                     type="password" 
                     id="register-password" 
                     name="password"
-                    placeholder="Create a password (min. 6 characters)" 
+                    placeholder="Create a secure password (min. 6 characters)" 
                     required
                     autocomplete="new-password"
                 >
+                <div class="field-error"></div>
                 <div class="password-strength" id="password-strength"></div>
             </div>
             
@@ -52,11 +55,15 @@
                     required
                     autocomplete="new-password"
                 >
+                <div class="field-error"></div>
             </div>
             
             <button type="submit" id="register-button" class="btn-primary">
                 <span class="btn-text">Create Account</span>
-                <span class="btn-loading" style="display: none;">⏳</span>
+                <span class="btn-loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    Creating account...
+                </span>
             </button>
         </form>
         
@@ -204,16 +211,22 @@
                         break;
                 }
                 
-                this.passwordStrength.textContent = message;
-                this.passwordStrength.className = `password-strength ${className}`;
+                if (password) {
+                    this.passwordStrength.textContent = message;
+                    this.passwordStrength.className = `password-strength ${className}`;
+                    this.passwordStrength.style.display = 'block';
+                } else {
+                    this.passwordStrength.style.display = 'none';
+                }
             }
             
             showFieldError(input, message) {
                 input.classList.add('error');
-                const errorDiv = input.parentNode.querySelector('.field-error') || 
-                               this.createFieldErrorElement(input.parentNode);
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
+                const errorDiv = input.parentNode.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                }
             }
             
             clearFieldError(input) {
@@ -222,13 +235,6 @@
                 if (errorDiv) {
                     errorDiv.style.display = 'none';
                 }
-            }
-            
-            createFieldErrorElement(parent) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'field-error';
-                parent.appendChild(errorDiv);
-                return errorDiv;
             }
             
             async handleRegister() {
@@ -250,7 +256,7 @@
                 this.hideError();
                 
                 try {
-                    const response = await this.makeRequest(`${this.apiBaseUrl}/register`, {
+                    const response = await this.makeRequest(`${this.apiBaseUrl}/auth/register`, {
                         method: 'POST',
                         body: JSON.stringify({ email, password })
                     });
@@ -267,7 +273,7 @@
                         }
                         
                         // Show success message
-                        this.showSuccess('Account created successfully! Redirecting...');
+                        this.showSuccess('Account created successfully! Welcome to Calm Companion 🌿');
                         
                         // Redirect after a short delay
                         setTimeout(() => {
@@ -339,7 +345,9 @@
                 
                 if (loading) {
                     btnText.style.display = 'none';
-                    btnLoading.style.display = 'inline';
+                    btnLoading.style.display = 'flex';
+                    btnLoading.style.alignItems = 'center';
+                    btnLoading.style.gap = '0.5rem';
                 } else {
                     btnText.style.display = 'inline';
                     btnLoading.style.display = 'none';

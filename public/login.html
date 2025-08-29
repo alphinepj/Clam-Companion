@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Login to Calm Companion - Your AI wellness assistant">
-    <title>Login | Calm Companion</title>
+    <title>🌿 Login | Calm Companion</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#4A7C59">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
 </head>
 <body>
-    <div class="form-container">
+    <div class="form-container fade-in">
         <div class="form-header">
             <h1>🌿 Welcome Back</h1>
             <p>Sign in to continue your wellness journey</p>
@@ -18,15 +19,16 @@
         
         <form id="login-form" class="auth-form">
             <div class="form-group">
-                <label for="login-email">Email</label>
+                <label for="login-email">Email Address</label>
                 <input 
                     type="email" 
                     id="login-email" 
                     name="email"
-                    placeholder="Enter your email" 
+                    placeholder="Enter your email address" 
                     required
                     autocomplete="email"
                 >
+                <div class="field-error"></div>
             </div>
             
             <div class="form-group">
@@ -39,11 +41,15 @@
                     required
                     autocomplete="current-password"
                 >
+                <div class="field-error"></div>
             </div>
             
             <button type="submit" id="login-button" class="btn-primary">
                 <span class="btn-text">Sign In</span>
-                <span class="btn-loading" style="display: none;">⏳</span>
+                <span class="btn-loading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    Signing in...
+                </span>
             </button>
         </form>
         
@@ -148,10 +154,11 @@
             
             showFieldError(input, message) {
                 input.classList.add('error');
-                const errorDiv = input.parentNode.querySelector('.field-error') || 
-                               this.createFieldErrorElement(input.parentNode);
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
+                const errorDiv = input.parentNode.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                }
             }
             
             clearFieldError(input) {
@@ -160,13 +167,6 @@
                 if (errorDiv) {
                     errorDiv.style.display = 'none';
                 }
-            }
-            
-            createFieldErrorElement(parent) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'field-error';
-                parent.appendChild(errorDiv);
-                return errorDiv;
             }
             
             async handleLogin() {
@@ -187,7 +187,7 @@
                 this.hideError();
                 
                 try {
-                    const response = await this.makeRequest(`${this.apiBaseUrl}/login`, {
+                    const response = await this.makeRequest(`${this.apiBaseUrl}/auth/login`, {
                         method: 'POST',
                         body: JSON.stringify({ email, password })
                     });
@@ -268,7 +268,9 @@
                 
                 if (loading) {
                     btnText.style.display = 'none';
-                    btnLoading.style.display = 'inline';
+                    btnLoading.style.display = 'flex';
+                    btnLoading.style.alignItems = 'center';
+                    btnLoading.style.gap = '0.5rem';
                 } else {
                     btnText.style.display = 'inline';
                     btnLoading.style.display = 'none';
