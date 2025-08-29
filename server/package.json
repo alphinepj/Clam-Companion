@@ -13,10 +13,18 @@
     "build": "echo 'No build step required for Node.js server'",
     "clean": "rm -rf node_modules package-lock.json && npm install"
   },
-  "keywords": ["chat", "ai", "meditation", "wellness", "companion"],
+  "keywords": [
+    "chat",
+    "ai",
+    "meditation",
+    "wellness",
+    "companion"
+  ],
   "author": "Calm Companion Team",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
+    "@genkit-ai/googleai": "^1.17.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "compression": "^1.7.4",
@@ -24,10 +32,12 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
+    "genkit": "^1.17.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "node-fetch": "^3.3.2",
+    "openai": "^5.16.0",
     "winston": "^3.11.0"
   },
   "devDependencies": {

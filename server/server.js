@@ -1,4 +1,4 @@
-// server/server.js - Enhanced Calm Companion Chat App Server v2.1.0
+// server/server.js - Enhanced Calm Companion Chat App Server v2.3.0
 
 const express = require('express');
 const cors = require('cors');
@@ -11,6 +11,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const winston = require('winston');
 require('dotenv').config();
+const { calmCompanionFlow, toneAnalysisFlow, languageDetectionFlow } = require('./gemini');
+const { generateOpenAIResponse } = require('./openai');
+const { generateAnthropicResponse } = require('./anthropic');
 
 // Configure logging
 const logger = winston.createLogger({
@@ -268,10 +271,10 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ✅ Chat Route with enhanced AI response
+// ✅ Chat Route with multi-language support
 app.post('/api/chat', authenticateToken, async (req, res) => {
   try {
-    const { message, goal, tone, conversationId } = req.body;
+    const { message, goal, tone, language, conversationId, aiProvider } = req.body;
     
     if (!message || !goal) {
       return res.status(400).json({ 
@@ -301,38 +304,56 @@ app.post('/api/chat', authenticateToken, async (req, res) => {
       conversations.push(conversation);
       user.conversationCount++;
     }
+    
+    let detectedLanguage = language;
+    if (!detectedLanguage) {
+        const langResult = await languageDetectionFlow.run({ message });
+        detectedLanguage = langResult.language;
+    }
+    
+    let detectedTone = tone;
+    if (!detectedTone) {
+        const toneResult = await toneAnalysisFlow.run({ message, language: detectedLanguage });
+        detectedTone = toneResult.tone;
+    }
 
     // Add user message
     const userMessage = {
       role: 'user',
       content: message,
       timestamp: new Date().toISOString(),
-      tone: tone || 'neutral'
+      tone: detectedTone,
+      language: detectedLanguage
     };
     conversation.messages.push(userMessage);
 
     // Generate AI response
-    const aiResponse = await generateAIResponse(message, goal, tone, conversation.messages);
+    const aiResponse = await generateAIResponse(message, goal, detectedTone, conversation.messages, detectedLanguage, aiProvider);
     
     // Add AI message
     const aiMessage = {
       role: 'assistant',
       content: aiResponse.response,
       timestamp: new Date().toISOString(),
-      tone: aiResponse.tone
+      tone: aiResponse.tone,
+      language: detectedLanguage
     };
     conversation.messages.push(aiMessage);
 
     logger.info('Chat message processed', { 
       userId: req.user.userId, 
       goal, 
-      messageLength: message.length 
+      messageLength: message.length,
+      aiProvider: aiResponse.aiProvider,
+      language: detectedLanguage
     });
 
     res.json({
       response: aiResponse.response,
       conversationId: conversation.id,
-      tone: aiResponse.tone
+      tone: aiResponse.tone,
+      language: detectedLanguage,
+      aiProvider: aiResponse.aiProvider
     });
   } catch (err) {
     logger.error('Chat error', { error: err.message, stack: err.stack });
@@ -417,7 +438,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: '2.1.0',
+    version: '2.3.0',
     environment: NODE_ENV,
     uptime: process.uptime(),
     memory: process.memoryUsage()
@@ -427,9 +448,9 @@ app.get('/api/health', (req, res) => {
 // ✅ Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: '🌿 Calm Companion Chat App API v2.1.0',
+    message: '🌿 Calm Companion Chat App API v2.3.0',
     status: 'running',
-    version: '2.1.0',
+    version: '2.3.0',
     environment: NODE_ENV,
     endpoints: {
       health: '/api/health',
@@ -478,99 +499,43 @@ function getFavoriteGoal(conversations) {
   );
 }
 
-// ✅ Enhanced AI Response Generation
-async function generateAIResponse(message, goal, tone, conversationHistory) {
-  // Enhanced response system with better context awareness
-  const responses = getGoalBasedResponses(goal, tone);
-  
-  // Add conversation context
-  const context = buildConversationContext(conversationHistory, goal);
-  
-  // Simulate API delay (will be replaced with real API calls)
-  await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
-  
-  // Generate contextual response
-  const response = generateContextualResponse(message, responses, tone, context);
-  
-  return {
-    response,
-    tone: tone || 'neutral'
+// ✅ AI Response Generation with smart fallbacks and multi-language support
+async function generateAIResponse(message, goal, tone, conversationHistory, language, preferredProvider) {
+  const providers = {
+    openai: generateOpenAIResponse,
+    gemini: async (message, goal, tone, conversationHistory, language) => calmCompanionFlow.run({ message, goal, tone, conversationHistory, language }),
+    anthropic: generateAnthropicResponse,
   };
-}
 
-function buildConversationContext(history, goal) {
-  const recentMessages = history.slice(-4); // Last 4 messages for context
-  const userTones = recentMessages
-    .filter(m => m.role === 'user')
-    .map(m => m.tone);
-  
-  return {
-    recentTones: userTones,
-    goal,
-    messageCount: history.length,
-    isFirstMessage: history.length === 1
-  };
-}
+  const providerOrder = preferredProvider 
+    ? [preferredProvider, ...Object.keys(providers).filter(p => p !== preferredProvider)]
+    : Object.keys(providers);
 
-function generateContextualResponse(message, responses, tone, context) {
-  let response = responses[Math.floor(Math.random() * responses.length)];
-  
-  // Add contextual elements
-  if (context.isFirstMessage) {
-    response = `Hello! I'm here to help you with ${context.goal.replace('-', ' ')}. ${response}`;
+  for (const provider of providerOrder) {
+    try {
+      logger.info(`Attempting to generate response with ${provider} in ${language}`);
+      const result = await providers[provider](message, goal, tone, conversationHistory, language);
+      logger.info(`Successfully generated response with ${provider} in ${language}`);
+      return { ...result, aiProvider: provider };
+    } catch (error) {
+      logger.error(`Error generating AI response with ${provider} in ${language}:`, { 
+          error: error.message, 
+          stack: error.stack,
+      });
+    }
   }
   
-  // Add tone-specific elements
-  if (tone === 'excited') {
-    response += ' I can feel your enthusiasm! 🌟';
-  } else if (tone === 'stressed') {
-    response += ' Remember to take deep breaths. You are doing great! 💚';
-  }
-  
-  return response;
+  return {
+    response: 'I am having trouble understanding you right now. Please try again later.',
+    tone: 'error',
+    aiProvider: 'none'
+  };
 }
 
-// ✅ Goal-based response system
-function getGoalBasedResponses(goal, tone) {
-  const responses = {
-    'polite-greetings': [
-      "Hello! It's wonderful to meet you. How are you doing today?",
-      "Hi there! I hope you're having a lovely day. What brings you here?",
-      "Greetings! I'm so glad you stopped by. How can I help you today?",
-      "Hello! Welcome to our conversation. I'm here to chat and support you."
-    ],
-    'kind-disagreement': [
-      "I understand your perspective, and I appreciate you sharing it with me.",
-      "That's an interesting point of view. Let me think about that for a moment.",
-      "I see where you're coming from, and I respect your opinion on this.",
-      "Thank you for sharing that. It's important to consider different viewpoints."
-    ],
-    'respectful-questions': [
-      "I'd love to learn more about that. Could you tell me a bit more?",
-      "That sounds fascinating! Would you mind sharing more details?",
-      "I'm curious about your experience. What was that like for you?",
-      "Thank you for sharing. How did that make you feel?"
-    ],
-    'emotional-support': [
-      "I hear you, and I want you to know that your feelings are valid.",
-      "It sounds like you're going through a lot right now. I'm here for you.",
-      "You're not alone in this. I'm here to listen and support you.",
-      "Thank you for trusting me with this. You're showing real strength."
-    ],
-    'stress-relief': [
-      "Let's take a moment to breathe together. Inhale slowly... and exhale.",
-      "Remember, it's okay to take breaks and be kind to yourself.",
-      "You're doing the best you can, and that's enough.",
-      "Let's focus on one thing at a time. What feels most important right now?"
-    ]
-  };
-  
-  return responses[goal] || responses['emotional-support'];
-}
 
 // ✅ Start server with enhanced error handling
 const server = app.listen(PORT, () => {
-  logger.info(`🌿 Calm Companion Server v2.1.0 running on port ${PORT}`, {
+  logger.info(`🌿 Calm Companion Server v2.3.0 running on port ${PORT}`, {
     port: PORT,
     environment: NODE_ENV,
     timestamp: new Date().toISOString()
