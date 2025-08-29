@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Calm Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>🌿 Calm Companion</h1>
+                <div class="user-info">
+                    <span id="user-email"></span>
+                    <button onclick="logout()" class="logout-btn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Profile Content -->
+        <div class="profile-container">
+            <div class="profile-card">
+                <h2>👤 Your Profile</h2>
+                
+                <div class="profile-info">
+                    <div class="info-item">
+                        <label>Email:</label>
+                        <span id="profile-email"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Member since:</label>
+                        <span id="member-since"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Last login:</label>
+                        <span id="last-login"></span>
+                    </div>
+                    <div class="info-item">
+                        <label>Conversations:</label>
+                        <span id="conversation-count">0</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Total messages:</label>
+                        <span id="total-messages">0</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Favorite goal:</label>
+                        <span id="favorite-goal">None yet</span>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-section">
+                    <h3>📊 Your Activity</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-conversations">0</div>
+                            <div class="stat-label">Conversations</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-messages">0</div>
+                            <div class="stat-label">Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="stat-days">0</div>
+                            <div class="stat-label">Days Active</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Conversations -->
+                <div class="conversations-section">
+                    <h3>💬 Recent Conversations</h3>
+                    <div class="conversations-list" id="conversations-list">
+                        <div class="no-conversations">No conversations yet. Start chatting to see your history here!</div>
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button onclick="goToChat()" class="primary-btn">Continue Chatting</button>
+                    <button onclick="logout()" class="secondary-btn">Logout</button>
+                </div>
+
+                <div class="profile-footer">
+                    <p>Thank you for being part of the Calm Companion community! 🌿</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .profile-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            background: #f8fafc;
+            overflow-y: auto;
+        }
+
+        .profile-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .profile-card h2 {
+            margin-bottom: 2rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .profile-info {
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-item label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .info-item span {
+            color: #2d3748;
+        }
+
+        .stats-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+
+        .stats-section h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #4facfe;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .conversations-section {
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .conversations-section h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .conversations-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            background: #f7fafc;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #4facfe;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .conversation-item:hover {
+            background: #edf2f7;
+            transform: translateX(4px);
+        }
+
+        .conversation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .conversation-goal {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .conversation-date {
+            font-size: 0.8rem;
+            color: #a0aec0;
+        }
+
+        .conversation-meta {
+            font-size: 0.8rem;
+            color: #4a5568;
+        }
+
+        .no-conversations {
+            text-align: center;
+            color: #a0aec0;
+            font-style: italic;
+            padding: 2rem;
+        }
+
+        .profile-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+        }
+
+        .secondary-btn {
+            background: none;
+            border: 2px solid #e2e8f0;
+            color: #4a5568;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .secondary-btn:hover {
+            border-color: #4facfe;
+            color: #4facfe;
+        }
+
+        .profile-footer {
+            color: #a0aec0;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 1rem;
+            }
+            
+            .profile-card {
+                padding: 2rem;
+            }
+            
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                document.getElementById('user-email').textContent = payload.email;
+                loadUserProfile();
+            } catch (e) {
+                console.error('Error parsing token:', e);
+                logout();
+            }
+        }
+
+        async function loadUserProfile() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:3000/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const profile = await response.json();
+                    updateProfileDisplay(profile);
+                    loadConversations();
+                } else {
+                    throw new Error('Failed to load profile');
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showError('Failed to load profile data');
+            }
+        }
+
+        function updateProfileDisplay(profile) {
+            document.getElementById('profile-email').textContent = profile.email;
+            
+            const memberSince = new Date(profile.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('member-since').textContent = memberSince;
+            
+            const lastLogin = profile.lastLogin ? new Date(profile.lastLogin).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }) : 'Never';
+            document.getElementById('last-login').textContent = lastLogin;
+            
+            document.getElementById('conversation-count').textContent = profile.conversationCount;
+            document.getElementById('total-messages').textContent = profile.totalMessages;
+            
+            const goalLabels = {
+                'polite-greetings': 'Polite Greetings',
+                'kind-disagreement': 'Kind Disagreement',
+                'respectful-questions': 'Respectful Questions',
+                'emotional-support': 'Emotional Support',
+                'stress-relief': 'Stress Relief'
+            };
+            document.getElementById('favorite-goal').textContent = goalLabels[profile.favoriteGoal] || 'None yet';
+
+            // Update stats
+            document.getElementById('stat-conversations').textContent = profile.conversationCount;
+            document.getElementById('stat-messages').textContent = profile.totalMessages;
+            
+            // Calculate days active
+            const daysActive = Math.ceil((new Date() - new Date(profile.createdAt)) / (1000 * 60 * 60 * 24));
+            document.getElementById('stat-days').textContent = Math.max(1, daysActive);
+        }
+
+        async function loadConversations() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:3000/conversations', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const conversations = await response.json();
+                    displayConversations(conversations);
+                } else {
+                    throw new Error('Failed to load conversations');
+                }
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+            }
+        }
+
+        function displayConversations(conversations) {
+            const container = document.getElementById('conversations-list');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = '<div class="no-conversations">No conversations yet. Start chatting to see your history here!</div>';
+                return;
+            }
+
+            const goalLabels = {
+                'polite-greetings': '👋 Polite Greetings',
+                'kind-disagreement': '🤝 Kind Disagreement',
+                'respectful-questions': '❓ Respectful Questions',
+                'emotional-support': '💙 Emotional Support',
+                'stress-relief': '🧘 Stress Relief'
+            };
+
+            container.innerHTML = conversations.map(conv => {
+                const date = new Date(conv.lastMessage || conv.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                return `
+                    <div class="conversation-item" onclick="viewConversation('${conv.id}')">
+                        <div class="conversation-header">
+                            <div class="conversation-goal">${goalLabels[conv.goal] || conv.goal}</div>
+                            <div class="conversation-date">${date}</div>
+                        </div>
+                        <div class="conversation-meta">${conv.messageCount} messages</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function viewConversation(conversationId) {
+            // For now, just go back to chat
+            // In the future, this could show the full conversation
+            goToChat();
+        }
+
+        function showError(message) {
+            // Simple error display
+            alert(message);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        function goToChat() {
+            window.location.href = 'index.html';
+        }
+
+        // Initialize profile page
+        document.addEventListener('DOMContentLoaded', checkAuth);
+    </script>
+</body>
+</html>

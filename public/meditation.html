@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meditation Timer | Calm Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>🌿 Calm Companion</h1>
+                <div class="user-info">
+                    <span id="user-email"></span>
+                    <a href="index.html" class="profile-link">Chat</a>
+                    <a href="profile.html" class="profile-link">Profile</a>
+                    <button onclick="logout()" class="logout-btn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Meditation Content -->
+        <div class="meditation-container">
+            <div class="meditation-card">
+                <h2>🧘 Meditation Timer</h2>
+                
+                <!-- Timer Display -->
+                <div class="timer-section">
+                    <div class="timer-display" id="timer-display">
+                        <span class="timer-minutes" id="timer-minutes">05</span>
+                        <span class="timer-separator">:</span>
+                        <span class="timer-seconds" id="timer-seconds">00</span>
+                    </div>
+                    <div class="timer-label" id="timer-label">Ready to begin</div>
+                </div>
+
+                <!-- Timer Controls -->
+                <div class="timer-controls">
+                    <button id="start-btn" class="timer-btn primary-btn" onclick="startTimer()">Start</button>
+                    <button id="pause-btn" class="timer-btn secondary-btn" onclick="pauseTimer()" style="display: none;">Pause</button>
+                    <button id="reset-btn" class="timer-btn secondary-btn" onclick="resetTimer()">Reset</button>
+                </div>
+
+                <!-- Preset Durations -->
+                <div class="preset-section">
+                    <h3>⏱️ Quick Start</h3>
+                    <div class="preset-buttons">
+                        <button class="preset-btn" onclick="setTimer(5)">5 min</button>
+                        <button class="preset-btn" onclick="setTimer(10)">10 min</button>
+                        <button class="preset-btn" onclick="setTimer(15)">15 min</button>
+                        <button class="preset-btn" onclick="setTimer(20)">20 min</button>
+                    </div>
+                </div>
+
+                <!-- Breathing Exercise -->
+                <div class="breathing-section">
+                    <h3>🫁 Breathing Exercise</h3>
+                    <div class="breathing-circle" id="breathing-circle">
+                        <div class="breathing-text" id="breathing-text">Breathe</div>
+                    </div>
+                    <button id="breathing-btn" class="breathing-btn" onclick="toggleBreathing()">Start Breathing</button>
+                </div>
+
+                <!-- Ambient Sounds -->
+                <div class="sounds-section">
+                    <h3>🎵 Ambient Sounds</h3>
+                    <div class="sound-options">
+                        <button class="sound-btn" onclick="playSound('rain')">🌧️ Rain</button>
+                        <button class="sound-btn" onclick="playSound('forest')">🌲 Forest</button>
+                        <button class="sound-btn" onclick="playSound('ocean')">🌊 Ocean</button>
+                        <button class="sound-btn" onclick="playSound('fire')">🔥 Fire</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .meditation-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: calc(100vh - 80px);
+        }
+
+        .meditation-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .meditation-card h2 {
+            margin-bottom: 2rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .timer-section {
+            margin-bottom: 2rem;
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 300;
+            color: #4facfe;
+            margin-bottom: 0.5rem;
+            font-family: 'Inter', monospace;
+        }
+
+        .timer-minutes, .timer-seconds {
+            display: inline-block;
+            min-width: 80px;
+        }
+
+        .timer-separator {
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .timer-label {
+            font-size: 1.1rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .timer-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            min-width: 80px;
+        }
+
+        .preset-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+
+        .preset-section h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .preset-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #4a5568;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            border-color: #4facfe;
+            color: #4facfe;
+            transform: translateY(-1px);
+        }
+
+        .breathing-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+
+        .breathing-section h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .breathing-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            transition: all 4s ease-in-out;
+            animation: none;
+        }
+
+        .breathing-circle.active {
+            animation: breathe 8s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% { 
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        .breathing-text {
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .breathing-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .breathing-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+        }
+
+        .sounds-section {
+            padding: 1.5rem;
+            background: #f7fafc;
+            border-radius: 12px;
+        }
+
+        .sounds-section h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .sound-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+
+        .sound-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #4a5568;
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sound-btn:hover {
+            border-color: #4facfe;
+            color: #4facfe;
+            transform: translateY(-1px);
+        }
+
+        .sound-btn.active {
+            background: #4facfe;
+            color: white;
+            border-color: #4facfe;
+        }
+
+        @media (max-width: 768px) {
+            .meditation-container {
+                padding: 1rem;
+            }
+            
+            .meditation-card {
+                padding: 2rem;
+            }
+            
+            .timer-display {
+                font-size: 3rem;
+            }
+            
+            .timer-minutes, .timer-seconds {
+                min-width: 60px;
+            }
+            
+            .preset-buttons, .sound-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        let timerInterval;
+        let breathingInterval;
+        let currentTime = 300; // 5 minutes in seconds
+        let isRunning = false;
+        let isBreathing = false;
+        let currentSound = null;
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                document.getElementById('user-email').textContent = payload.email;
+            } catch (e) {
+                console.error('Error parsing token:', e);
+                logout();
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = currentTime % 60;
+            
+            document.getElementById('timer-minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('timer-seconds').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        function startTimer() {
+            if (currentTime <= 0) return;
+            
+            isRunning = true;
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('pause-btn').style.display = 'inline-block';
+            document.getElementById('timer-label').textContent = 'Meditating...';
+            
+            timerInterval = setInterval(() => {
+                currentTime--;
+                updateTimerDisplay();
+                
+                if (currentTime <= 0) {
+                    stopTimer();
+                    document.getElementById('timer-label').textContent = 'Session complete!';
+                    playCompletionSound();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('start-btn').style.display = 'inline-block';
+            document.getElementById('pause-btn').style.display = 'none';
+            document.getElementById('timer-label').textContent = 'Paused';
+        }
+
+        function resetTimer() {
+            stopTimer();
+            currentTime = 300; // Reset to 5 minutes
+            updateTimerDisplay();
+            document.getElementById('timer-label').textContent = 'Ready to begin';
+        }
+
+        function stopTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('start-btn').style.display = 'inline-block';
+            document.getElementById('pause-btn').style.display = 'none';
+        }
+
+        function setTimer(minutes) {
+            stopTimer();
+            currentTime = minutes * 60;
+            updateTimerDisplay();
+            document.getElementById('timer-label').textContent = `Set to ${minutes} minutes`;
+        }
+
+        function toggleBreathing() {
+            const circle = document.getElementById('breathing-circle');
+            const btn = document.getElementById('breathing-btn');
+            const text = document.getElementById('breathing-text');
+            
+            if (isBreathing) {
+                stopBreathing();
+            } else {
+                startBreathing();
+            }
+        }
+
+        function startBreathing() {
+            isBreathing = true;
+            const circle = document.getElementById('breathing-circle');
+            const btn = document.getElementById('breathing-btn');
+            const text = document.getElementById('breathing-text');
+            
+            circle.classList.add('active');
+            btn.textContent = 'Stop Breathing';
+            
+            let breathCount = 0;
+            breathingInterval = setInterval(() => {
+                breathCount++;
+                if (breathCount % 2 === 1) {
+                    text.textContent = 'Breathe In';
+                } else {
+                    text.textContent = 'Breathe Out';
+                }
+            }, 4000); // 4 seconds per breath phase
+        }
+
+        function stopBreathing() {
+            isBreathing = false;
+            const circle = document.getElementById('breathing-circle');
+            const btn = document.getElementById('breathing-btn');
+            const text = document.getElementById('breathing-text');
+            
+            circle.classList.remove('active');
+            btn.textContent = 'Start Breathing';
+            text.textContent = 'Breathe';
+            
+            clearInterval(breathingInterval);
+        }
+
+        function playSound(soundType) {
+            // Remove active class from all sound buttons
+            document.querySelectorAll('.sound-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // In a real app, you would play actual audio files
+            console.log(`Playing ${soundType} sound`);
+            
+            // For demo purposes, show a notification
+            showNotification(`Playing ${soundType} ambient sound`);
+        }
+
+        function playCompletionSound() {
+            // Play a gentle completion sound
+            showNotification('Meditation session complete! 🎉');
+        }
+
+        function showNotification(message) {
+            // Create a simple notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4facfe;
+                color: white;
+                padding: 1rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            updateTimerDisplay();
+        });
+
+        // Add CSS animations for notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

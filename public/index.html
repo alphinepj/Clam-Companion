@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calm Companion Chat - Your AI Wellness Partner</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Your AI companion for emotional support, stress relief, and positive communication">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🌿 Calm Companion</h1>
+                    <p class="header-subtitle">Your AI Wellness Partner</p>
+                </div>
+                <div class="user-info">
+                    <span id="user-email" class="user-email"></span>
+                    <div class="nav-links">
+                        <a href="meditation.html" class="nav-link" title="Meditation & Breathing">
+                            <span class="nav-icon">🧘</span>
+                            <span class="nav-text">Meditate</span>
+                        </a>
+                        <a href="profile.html" class="nav-link" title="Your Profile & Stats">
+                            <span class="nav-icon">👤</span>
+                            <span class="nav-text">Profile</span>
+                        </a>
+                        <button onclick="logout()" class="logout-btn" title="Sign Out">
+                            <span class="nav-icon">🚪</span>
+                            <span class="nav-text">Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Welcome Section (shown when no goal is selected) -->
+        <div class="welcome-section" id="welcome-section">
+            <div class="welcome-content">
+                <div class="welcome-header">
+                    <h2>Welcome to Your Calm Companion</h2>
+                    <p>Choose how you'd like to connect today</p>
+                </div>
+                
+                <div class="quick-stats" id="quick-stats">
+                    <div class="stat-card">
+                        <span class="stat-number" id="conversation-count">0</span>
+                        <span class="stat-label">Conversations</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="message-count">0</span>
+                        <span class="stat-label">Messages</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="days-active">1</span>
+                        <span class="stat-label">Days Active</span>
+                    </div>
+                </div>
+
+                <div class="goal-section" id="goal-section">
+                    <h3>What would you like to work on today?</h3>
+                    <div class="goal-options">
+                        <button class="goal-btn" data-goal="emotional-support">
+                            <span class="goal-icon">💙</span>
+                            <div class="goal-content">
+                                <h4>Emotional Support</h4>
+                                <p>Get understanding and comfort</p>
+                            </div>
+                        </button>
+                        <button class="goal-btn" data-goal="stress-relief">
+                            <span class="goal-icon">🧘</span>
+                            <div class="goal-content">
+                                <h4>Stress Relief</h4>
+                                <p>Learn calming techniques</p>
+                            </div>
+                        </button>
+                        <button class="goal-btn" data-goal="polite-greetings">
+                            <span class="goal-icon">👋</span>
+                            <div class="goal-content">
+                                <h4>Polite Greetings</h4>
+                                <p>Practice friendly conversation</p>
+                            </div>
+                        </button>
+                        <button class="goal-btn" data-goal="kind-disagreement">
+                            <span class="goal-icon">🤝</span>
+                            <div class="goal-content">
+                                <h4>Kind Disagreement</h4>
+                                <p>Express different views respectfully</p>
+                            </div>
+                        </button>
+                        <button class="goal-btn" data-goal="respectful-questions">
+                            <span class="goal-icon">❓</span>
+                            <div class="goal-content">
+                                <h4>Respectful Questions</h4>
+                                <p>Learn polite Japanese phrases</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="welcome-tips">
+                    <h4>💡 Quick Tips</h4>
+                    <ul>
+                        <li>Be honest about your feelings - I'm here to listen</li>
+                        <li>Try different conversation goals to explore various skills</li>
+                        <li>Use the meditation feature for quick stress relief</li>
+                        <li>Check your profile to track your progress</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chat-container" style="display: none;">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <button class="back-btn" onclick="showGoalSelection()">
+                        <span>←</span> Back to Goals
+                    </button>
+                    <div class="current-goal">
+                        <span id="current-goal-icon">💙</span>
+                        <span id="current-goal-text">Emotional Support</span>
+                    </div>
+                </div>
+                
+                <!-- Emotional Tone Indicator -->
+                <div class="tone-indicator" id="tone-indicator">
+                    <span class="tone-emoji" id="tone-emoji">😊</span>
+                    <span class="tone-text" id="tone-text">Ready to chat</span>
+                </div>
+            </div>
+
+            <!-- Messages Area -->
+            <div class="messages-area" id="messages-area">
+                <div class="welcome-message">
+                    <div class="message ai-message">
+                        <div class="message-avatar">🌿</div>
+                        <div class="message-content">
+                            <p>Hello! I'm your Calm Companion. I'm here to help you with positive communication and emotional well-being. How can I assist you today?</p>
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <textarea 
+                        id="message-input" 
+                        placeholder="Share what's on your mind..."
+                        rows="1"
+                        maxlength="500"
+                    ></textarea>
+                    <button id="send-btn" onclick="sendMessage()" title="Send Message">
+                        <span class="send-icon">📤</span>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count" id="char-count">0/500</span>
+                    <div class="input-actions">
+                        <button class="goal-change-btn" onclick="showGoalSelection()">
+                            <span>🔄</span> Change Goal
+                        </button>
+                        <button class="clear-btn" onclick="clearChat()" title="Clear Chat">
+                            <span>🗑️</span> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>Thinking...</p>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="error-message" style="display: none;">
+            <div class="error-content">
+                <span class="error-icon">⚠️</span>
+                <span class="error-text" id="error-text"></span>
+                <button class="error-close" onclick="hideError()">×</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+</html>

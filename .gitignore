@@ -1,0 +1,49 @@
+# Node / JavaScript
+node_modules/
+**/node_modules/
+
+# Logs
+logs/
+**/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+server/.env
+
+# Build / Cache
+.dist/
+dist/
+build/
+.cache/
+coverage/
+.tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python simple server cache
+__pycache__/
+*.pyc
+
+# Local data
+*.sqlite
+*.db
+
+# Service worker cache (if generated during testing)
+public/*.cache
+
+# Misc
+*.tgz
+*.tar.gz

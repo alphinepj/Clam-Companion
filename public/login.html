@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to Calm Companion - Your AI wellness assistant">
+    <title>Login | Calm Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <h1>🌿 Welcome Back</h1>
+            <p>Sign in to continue your wellness journey</p>
+        </div>
+        
+        <form id="login-form" class="auth-form">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input 
+                    type="email" 
+                    id="login-email" 
+                    name="email"
+                    placeholder="Enter your email" 
+                    required
+                    autocomplete="email"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input 
+                    type="password" 
+                    id="login-password" 
+                    name="password"
+                    placeholder="Enter your password" 
+                    required
+                    autocomplete="current-password"
+                >
+            </div>
+            
+            <button type="submit" id="login-button" class="btn-primary">
+                <span class="btn-text">Sign In</span>
+                <span class="btn-loading" style="display: none;">⏳</span>
+            </button>
+        </form>
+        
+        <div class="form-footer">
+            <p>Don't have an account? <a href="register.html">Create one</a></p>
+            <a href="index.html" class="back-link">← Back to Home</a>
+        </div>
+        
+        <div id="error-message" class="error-message" style="display: none;">
+            <span id="error-text"></span>
+        </div>
+    </div>
+
+    <script>
+        class LoginManager {
+            constructor() {
+                this.apiBaseUrl = 'http://localhost:5000/api';
+                this.form = document.getElementById('login-form');
+                this.emailInput = document.getElementById('login-email');
+                this.passwordInput = document.getElementById('login-password');
+                this.submitButton = document.getElementById('login-button');
+                this.errorMessage = document.getElementById('error-message');
+                this.errorText = document.getElementById('error-text');
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.checkExistingAuth();
+                this.focusFirstInput();
+            }
+            
+            setupEventListeners() {
+                this.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleLogin();
+                });
+                
+                // Real-time validation
+                this.emailInput.addEventListener('input', () => {
+                    this.validateEmail();
+                });
+                
+                this.passwordInput.addEventListener('input', () => {
+                    this.validatePassword();
+                });
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.hideError();
+                    }
+                });
+            }
+            
+            checkExistingAuth() {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        const currentTime = Date.now() / 1000;
+                        if (payload.exp > currentTime) {
+                            window.location.href = 'index.html';
+                        }
+                    } catch (e) {
+                        localStorage.removeItem('token');
+                    }
+                }
+            }
+            
+            focusFirstInput() {
+                setTimeout(() => {
+                    this.emailInput.focus();
+                }, 100);
+            }
+            
+            validateEmail() {
+                const email = this.emailInput.value.trim();
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if (email && !emailRegex.test(email)) {
+                    this.showFieldError(this.emailInput, 'Please enter a valid email address');
+                    return false;
+                } else {
+                    this.clearFieldError(this.emailInput);
+                    return true;
+                }
+            }
+            
+            validatePassword() {
+                const password = this.passwordInput.value;
+                
+                if (password && password.length < 6) {
+                    this.showFieldError(this.passwordInput, 'Password must be at least 6 characters');
+                    return false;
+                } else {
+                    this.clearFieldError(this.passwordInput);
+                    return true;
+                }
+            }
+            
+            showFieldError(input, message) {
+                input.classList.add('error');
+                const errorDiv = input.parentNode.querySelector('.field-error') || 
+                               this.createFieldErrorElement(input.parentNode);
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+            
+            clearFieldError(input) {
+                input.classList.remove('error');
+                const errorDiv = input.parentNode.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            }
+            
+            createFieldErrorElement(parent) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'field-error';
+                parent.appendChild(errorDiv);
+                return errorDiv;
+            }
+            
+            async handleLogin() {
+                const email = this.emailInput.value.trim();
+                const password = this.passwordInput.value;
+                
+                // Validate inputs
+                if (!email || !password) {
+                    this.showError('Please fill in all fields');
+                    return;
+                }
+                
+                if (!this.validateEmail() || !this.validatePassword()) {
+                    return;
+                }
+                
+                this.setLoading(true);
+                this.hideError();
+                
+                try {
+                    const response = await this.makeRequest(`${this.apiBaseUrl}/login`, {
+                        method: 'POST',
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Store token and user data
+                        localStorage.setItem('token', data.token);
+                        if (data.user) {
+                            localStorage.setItem('userProfile', JSON.stringify(data.user));
+                        }
+                        
+                        // Show success message
+                        this.showSuccess('Login successful! Redirecting...');
+                        
+                        // Redirect after a short delay
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                        
+                    } else {
+                        this.handleLoginError(data);
+                    }
+                    
+                } catch (error) {
+                    console.error('Login failed:', error);
+                    this.showError('Connection failed. Please check your internet and try again.');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+            
+            handleLoginError(data) {
+                const errorMessages = {
+                    'VALIDATION_ERROR': 'Please check your input and try again.',
+                    'INVALID_CREDENTIALS': 'Invalid email or password. Please try again.',
+                    'USER_NOT_FOUND': 'No account found with this email address.',
+                    'SERVER_ERROR': 'Server error. Please try again later.',
+                    'RATE_LIMIT_EXCEEDED': 'Too many login attempts. Please wait a moment.'
+                };
+                
+                const message = errorMessages[data.code] || data.error || 'Login failed. Please try again.';
+                this.showError(message);
+            }
+            
+            async makeRequest(url, options = {}) {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                
+                try {
+                    const response = await fetch(url, {
+                        ...options,
+                        signal: controller.signal,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers
+                        }
+                    });
+                    clearTimeout(timeoutId);
+                    return response;
+                } catch (error) {
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') {
+                        throw new Error('Request timeout');
+                    }
+                    throw error;
+                }
+            }
+            
+            setLoading(loading) {
+                const btnText = this.submitButton.querySelector('.btn-text');
+                const btnLoading = this.submitButton.querySelector('.btn-loading');
+                
+                this.submitButton.disabled = loading;
+                this.emailInput.disabled = loading;
+                this.passwordInput.disabled = loading;
+                
+                if (loading) {
+                    btnText.style.display = 'none';
+                    btnLoading.style.display = 'inline';
+                } else {
+                    btnText.style.display = 'inline';
+                    btnLoading.style.display = 'none';
+                }
+            }
+            
+            showError(message) {
+                this.errorText.textContent = message;
+                this.errorMessage.style.display = 'block';
+                this.errorMessage.className = 'error-message error';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    this.hideError();
+                }, 5000);
+            }
+            
+            showSuccess(message) {
+                this.errorText.textContent = message;
+                this.errorMessage.style.display = 'block';
+                this.errorMessage.className = 'error-message success';
+            }
+            
+            hideError() {
+                this.errorMessage.style.display = 'none';
+            }
+        }
+        
+        // Initialize login manager when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new LoginManager();
+        });
+    </script>
+</body>
+</html>
