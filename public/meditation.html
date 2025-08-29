@@ -73,6 +73,13 @@
                         <button class="sound-btn" onclick="playSound('ocean')">🌊 Ocean</button>
                         <button class="sound-btn" onclick="playSound('fire')">🔥 Fire</button>
                     </div>
+                    <div class="audio-controls">
+                        <audio id="ambient-audio" loop></audio>
+                        <div class="volume-control">
+                            <label for="volume-slider">Volume</label>
+                            <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -294,6 +301,22 @@
             color: white;
             border-color: #4facfe;
         }
+        
+        .audio-controls {
+            margin-top: 1rem;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            color: #4a5568;
+        }
+
+        #volume-slider {
+            cursor: pointer;
+        }
 
         @media (max-width: 768px) {
             .meditation-container {
@@ -325,6 +348,16 @@
         let isRunning = false;
         let isBreathing = false;
         let currentSound = null;
+
+        const ambientAudio = document.getElementById('ambient-audio');
+        const volumeSlider = document.getElementById('volume-slider');
+
+        const soundFiles = {
+            rain: 'https://www.soundjay.com/nature/rain-01.mp3',
+            forest: 'https://www.soundjay.com/nature/forest-01.mp3',
+            ocean: 'https://www.soundjay.com/nature/ocean-wave-01.mp3',
+            fire: 'https://www.soundjay.com/nature/fire-01.mp3',
+        };
 
         // Check authentication
         function checkAuth() {
@@ -446,20 +479,25 @@
         }
 
         function playSound(soundType) {
-            // Remove active class from all sound buttons
             document.querySelectorAll('.sound-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // Add active class to clicked button
-            event.target.classList.add('active');
-            
-            // In a real app, you would play actual audio files
-            console.log(`Playing ${soundType} sound`);
-            
-            // For demo purposes, show a notification
-            showNotification(`Playing ${soundType} ambient sound`);
+            if (currentSound === soundType) {
+                ambientAudio.pause();
+                currentSound = null;
+            } else {
+                event.target.classList.add('active');
+                ambientAudio.src = soundFiles[soundType];
+                ambientAudio.play();
+                currentSound = soundType;
+                showNotification(`Playing ${soundType} ambient sound`);
+            }
         }
+
+        volumeSlider.addEventListener('input', (e) => {
+            ambientAudio.volume = e.target.value;
+        });
 
         function playCompletionSound() {
             // Play a gentle completion sound

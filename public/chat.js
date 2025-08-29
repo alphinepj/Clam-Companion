@@ -1,5 +1,4 @@
-// Chat.js - Enhanced chat functionality for Calm Companion v2.1.0
-
+// Chat.js - Enhanced chat functionality for Calm Companion v2.5.0
 
 class CalmCompanionChat {
     constructor() {
@@ -11,6 +10,11 @@ class CalmCompanionChat {
         this.apiBaseUrl = 'http://localhost:5000/api';
         this.retryAttempts = 0;
         this.maxRetries = 3;
+        this.isRecording = false;
+        this.speechRecognition = null;
+        this.speechSynthesis = window.speechSynthesis;
+        this.voiceEnabled = false;
+        this.voices = [];
         this.init();
     }
 
@@ -21,6 +25,9 @@ class CalmCompanionChat {
         this.loadUserProfile();
         this.showWelcomeSection();
         this.setupServiceWorker();
+        this.setupSpeechRecognition();
+        this.loadVoices();
+        this.loadGoals();
     }
 
     async setupServiceWorker() {
@@ -41,7 +48,6 @@ class CalmCompanionChat {
             return;
         }
 
-        // Check if token is expired
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             const currentTime = Date.now() / 1000;
@@ -91,24 +97,28 @@ class CalmCompanionChat {
                 this.userProfile = await response.json();
                 this.updateProfileDisplay();
                 this.updateQuickStats();
-                // Cache profile data
                 localStorage.setItem('userProfile', JSON.stringify(this.userProfile));
+            } else {
+                this.loadCachedProfile();
             }
         } catch (error) {
             console.error('Error loading profile:', error);
-            // Try to load cached profile
-            const cachedProfile = localStorage.getItem('userProfile');
-            if (cachedProfile) {
-                this.userProfile = JSON.parse(cachedProfile);
-                this.updateProfileDisplay();
-                this.updateQuickStats();
-            }
+            this.loadCachedProfile();
+        }
+    }
+
+    loadCachedProfile() {
+        const cachedProfile = localStorage.getItem('userProfile');
+        if (cachedProfile) {
+            this.userProfile = JSON.parse(cachedProfile);
+            this.updateProfileDisplay();
+            this.updateQuickStats();
         }
     }
 
     async makeRequest(url, options = {}) {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         try {
             const response = await fetch(url, {
@@ -131,50 +141,24 @@ class CalmCompanionChat {
     }
 
     updateProfileDisplay() {
-        if (this.userProfile) {
-            const profileLink = document.getElementById('profile-link');
-            if (profileLink) {
-                profileLink.textContent = `${this.userProfile.email} (${this.userProfile.conversationCount} chats)`;
-            }
-        }
+        // This function is kept for legacy purposes, can be removed if not needed.
     }
 
     updateQuickStats() {
         if (this.userProfile) {
-            const conversationCountElement = document.getElementById('conversation-count');
-            const messageCountElement = document.getElementById('message-count');
-            const daysActiveElement = document.getElementById('days-active');
-
-            if (conversationCountElement) {
-                conversationCountElement.textContent = this.userProfile.conversationCount;
-            }
-            if (messageCountElement) {
-                messageCountElement.textContent = this.userProfile.totalMessages;
-            }
-            if (daysActiveElement) {
-                daysActiveElement.textContent = this.userProfile.daysActive || 1;
-            }
+            document.getElementById('conversation-count').textContent = this.userProfile.conversationCount;
+            document.getElementById('message-count').textContent = this.userProfile.totalMessages;
+            document.getElementById('days-active').textContent = this.userProfile.daysActive || 1;
         }
     }
 
     setupEventListeners() {
-        // Goal selection with improved accessibility
         document.querySelectorAll('.goal-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.selectGoal(e.currentTarget.dataset.goal);
-            });
-            
-            // Add keyboard support
-            btn.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.selectGoal(e.currentTarget.dataset.goal);
-                }
-            });
+            if (btn.id !== 'create-goal-btn') {
+                btn.addEventListener('click', (e) => this.selectGoal(e.currentTarget.dataset.goal));
+            }
         });
 
-        // Message input with improved UX
         const messageInput = document.getElementById('message-input');
         if (messageInput) {
             messageInput.addEventListener('keypress', (e) => {
@@ -183,88 +167,41 @@ class CalmCompanionChat {
                     this.sendMessage();
                 }
             });
-
-            messageInput.addEventListener('input', (e) => {
-                this.updateCharCount(e.target.value.length);
-                this.autoResizeTextarea(e.target);
-            });
-
-            // Add paste event for better UX
-            messageInput.addEventListener('paste', (e) => {
-                setTimeout(() => {
-                    this.updateCharCount(e.target.value.length);
-                    this.autoResizeTextarea(e.target);
-                }, 0);
-            });
+            messageInput.addEventListener('input', (e) => this.updateCharCount(e.target.value.length));
         }
 
-        // Send button
-        const sendButton = document.getElementById('send-button');
-        if (sendButton) {
-            sendButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.sendMessage();
-            });
-        }
-
-        // Clear conversation
-        const clearButton = document.getElementById('clear-conversation');
-        if (clearButton) {
-            clearButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.clearConversation();
-            });
-        }
-
-        // Add keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                switch (e.key) {
-                    case 'Enter':
-                        e.preventDefault();
-                        this.sendMessage();
-                        break;
-                    case 'k':
-                        e.preventDefault();
-                        this.clearConversation();
-                        break;
-                }
-            }
-        });
-
-        // Add visibility change listener for better UX
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                this.loadUserProfile();
-            }
-        });
+        document.getElementById('send-btn').addEventListener('click', () => this.sendMessage());
+        document.getElementById('voice-btn').addEventListener('click', () => this.toggleRecording());
+        document.getElementById('voice-toggle').addEventListener('change', (e) => this.toggleVoiceOutput(e.target.checked));
+        
+        // Custom goal modal listeners
+        document.getElementById('create-goal-btn').addEventListener('click', () => this.showCustomGoalModal());
+        document.getElementById('close-modal-btn').addEventListener('click', () => this.hideCustomGoalModal());
+        document.getElementById('save-goal-btn').addEventListener('click', () => this.saveCustomGoal());
     }
 
     selectGoal(goal) {
         this.currentGoal = goal;
         this.currentConversationId = null;
         this.conversationHistory = [];
+
+        document.getElementById('welcome-section').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'flex';
+
+        const goalButton = document.querySelector(`[data-goal="${goal}"]`);
+        if (goalButton) {
+            document.getElementById('current-goal-icon').textContent = goalButton.querySelector('.goal-icon').textContent;
+            document.getElementById('current-goal-text').textContent = goalButton.querySelector('h4').textContent;
+        } else {
+            // Handle custom goal
+            document.getElementById('current-goal-icon').textContent = '✨';
+            document.getElementById('current-goal-text').textContent = goal;
+        }
         
-        // Update UI
-        document.querySelectorAll('.goal-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-goal="${goal}"]`).classList.add('active');
-        
-        // Show goal-specific welcome message
-        this.showGoalWelcome(goal);
-        
-        // Clear messages area
         const messagesArea = document.getElementById('messages-area');
-        if (messagesArea) {
-            messagesArea.innerHTML = '';
-        }
-        
-        // Focus on input
-        const messageInput = document.getElementById('message-input');
-        if (messageInput) {
-            messageInput.focus();
-        }
+        messagesArea.innerHTML = '';
+        this.showGoalWelcome(goal);
+        document.getElementById('message-input').focus();
     }
 
     showGoalWelcome(goal) {
@@ -275,16 +212,14 @@ class CalmCompanionChat {
             'emotional-support': "I'm here to provide emotional support and understanding. Share what's on your mind, and I'll listen with care.",
             'stress-relief': "Let's work on stress relief techniques together. I'll help you learn calming strategies and mindfulness practices."
         };
-
-        const message = welcomeMessages[goal] || "I'm here to help you with your conversation goals!";
+        const message = welcomeMessages[goal] || `I'm here to help you with your goal: "${goal}". Let's begin.`;
         this.addAIMessage(message);
     }
 
     showWelcomeSection() {
-        const welcomeSection = document.getElementById('welcome-section');
-        if (welcomeSection) {
-            welcomeSection.style.display = 'block';
-        }
+        document.getElementById('welcome-section').style.display = 'block';
+        document.getElementById('chat-container').style.display = 'none';
+        this.loadGoals(); // Reload goals when showing the welcome section
     }
 
     async sendMessage() {
@@ -292,148 +227,88 @@ class CalmCompanionChat {
         const message = input.value.trim();
         
         if (!message || this.isLoading) return;
-        
         if (!this.currentGoal) {
             this.showError('Please select a conversation goal first.');
             return;
         }
         
-        // Add user message
         this.addUserMessage(message);
         input.value = '';
         this.updateCharCount(0);
-        this.autoResizeTextarea(input);
         
-        // Show loading
         this.setLoading(true);
         
         try {
-            // Detect emotional tone
-            const tone = this.detectEmotionalTone(message);
-            this.updateToneIndicator(tone.type, tone.description);
-            
-            // Get AI response from server with retry logic
-            const response = await this.getAIResponseWithRetry(message, tone);
+            const response = await this.getAIResponseWithRetry(message);
             this.addAIMessage(response.response);
-            
-            // Update conversation ID
             this.currentConversationId = response.conversationId;
-            
-            // Refresh user profile to update stats
             this.loadUserProfile();
-            
-            // Reset retry attempts on success
             this.retryAttempts = 0;
-            
         } catch (error) {
             console.error('Error getting AI response:', error);
-            this.showError('I\'m sorry, I\'m having trouble responding right now. Please try again in a moment.');
+            this.showError('I\'m sorry, I\'m having trouble responding right now. Please try again.');
         } finally {
             this.setLoading(false);
         }
     }
 
-    async getAIResponseWithRetry(message, tone) {
+    async getAIResponseWithRetry(message) {
         while (this.retryAttempts < this.maxRetries) {
             try {
-                return await this.getAIResponseFromServer(message, tone);
+                return await this.getAIResponseFromServer(message);
             } catch (error) {
                 this.retryAttempts++;
-                if (this.retryAttempts >= this.maxRetries) {
-                    throw error;
-                }
-                // Wait before retrying (exponential backoff)
+                if (this.retryAttempts >= this.maxRetries) throw error;
                 await new Promise(resolve => setTimeout(resolve, 1000 * this.retryAttempts));
             }
         }
     }
 
-    async getAIResponseFromServer(message, tone) {
+    async getAIResponseFromServer(message) {
         const token = localStorage.getItem('token');
         const response = await this.makeRequest(`${this.apiBaseUrl}/chat`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                message,
-                goal: this.currentGoal,
-                tone: tone.type,
-                conversationId: this.currentConversationId
-            })
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ message, goal: this.currentGoal, conversationId: this.currentConversationId })
         });
 
         if (!response.ok) {
             const error = await response.json();
-            if (response.status === 401 || response.status === 403) {
-                this.logout();
-                throw new Error('Authentication failed');
-            }
+            if (response.status === 401 || response.status === 403) this.logout();
             throw new Error(error.error || 'Failed to get response');
         }
-
-        return await response.json();
+        return response.json();
     }
 
     addUserMessage(text) {
-        const messageDiv = this.createMessageElement(text, 'user');
-        const messagesArea = document.getElementById('messages-area');
-        if (messagesArea) {
-            messagesArea.appendChild(messageDiv);
-            this.scrollToBottom();
-        }
-        this.conversationHistory.push({ role: 'user', content: text, timestamp: new Date().toISOString() });
+        this.addMessage(text, 'user');
     }
 
     addAIMessage(text) {
-        const messageDiv = this.createMessageElement(text, 'ai');
+        this.addMessage(text, 'ai');
+        if (this.voiceEnabled) {
+            this.speak(text);
+        }
+    }
+
+    addMessage(text, type) {
+        const messageDiv = this.createMessageElement(text, type);
         const messagesArea = document.getElementById('messages-area');
-        if (messagesArea) {
-            messagesArea.appendChild(messageDiv);
-            this.scrollToBottom();
-        }
-        this.conversationHistory.push({ role: 'assistant', content: text, timestamp: new Date().toISOString() });
-    }
-
-    showError(message) {
-        const errorDiv = document.getElementById('error-message');
-        const errorText = document.getElementById('error-text');
-        if (errorDiv && errorText) {
-            errorText.textContent = message;
-            errorDiv.style.display = 'block';
-            
-            // Auto-hide after 5 seconds
-            setTimeout(() => {
-                this.hideError();
-            }, 5000);
-        }
-    }
-
-    hideError() {
-        const errorDiv = document.getElementById('error-message');
-        if (errorDiv) {
-            errorDiv.style.display = 'none';
-        }
+        messagesArea.appendChild(messageDiv);
+        this.scrollToBottom();
+        this.conversationHistory.push({ role: type, content: text, timestamp: new Date().toISOString() });
     }
 
     createMessageElement(text, type) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}-message`;
-        
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
         const avatar = type === 'ai' ? '🌿' : '👤';
-        const name = type === 'ai' ? 'Calm Companion' : 'You';
-        
         messageDiv.innerHTML = `
-            <div class="message-header">
-                <span class="message-avatar">${avatar}</span>
-                <span class="message-name">${name}</span>
-                <span class="message-time">${time}</span>
-            </div>
-            <div class="message-content">${this.escapeHtml(text)}</div>
+            <div class="message-avatar">${avatar}</div>
+            <div class="message-content"><p>${this.escapeHtml(text)}</p></div>
+            <div class="message-time">${time}</div>
         `;
-        
         return messageDiv;
     }
 
@@ -445,140 +320,206 @@ class CalmCompanionChat {
 
     scrollToBottom() {
         const messagesArea = document.getElementById('messages-area');
-        if (messagesArea) {
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-        }
+        messagesArea.scrollTop = messagesArea.scrollHeight;
     }
 
     setLoading(loading) {
         this.isLoading = loading;
-        const sendButton = document.getElementById('send-button');
-        const messageInput = document.getElementById('message-input');
-        
-        if (sendButton) {
-            sendButton.disabled = loading;
-            sendButton.innerHTML = loading ? '⏳' : '📤';
-        }
-        
-        if (messageInput) {
-            messageInput.disabled = loading;
-        }
-        
-        // Show/hide loading indicator
-        const loadingIndicator = document.getElementById('loading-indicator');
-        if (loadingIndicator) {
-            loadingIndicator.style.display = loading ? 'block' : 'none';
-        }
+        document.getElementById('send-btn').disabled = loading;
+        document.getElementById('voice-btn').disabled = loading;
+        document.getElementById('message-input').disabled = loading;
+        document.getElementById('loading-overlay').style.display = loading ? 'flex' : 'none';
     }
 
-    updateToneIndicator(tone, description) {
-        const toneIndicator = document.getElementById('tone-indicator');
-        if (toneIndicator) {
-            const emoji = this.getToneEmoji(tone);
-            toneIndicator.innerHTML = `${emoji} ${description}`;
-            toneIndicator.className = `tone-indicator ${tone}`;
-            toneIndicator.style.display = 'block';
-            
-            // Hide after 3 seconds
-            setTimeout(() => {
-                toneIndicator.style.display = 'none';
-            }, 3000);
-        }
+    showError(message) {
+        const errorText = document.getElementById('error-text');
+        errorText.textContent = message;
+        document.getElementById('error-message').style.display = 'block';
+        setTimeout(() => this.hideError(), 5000);
     }
 
-    getToneEmoji(tone) {
-        const emojis = {
-            'happy': '😊',
-            'sad': '😢',
-            'angry': '😠',
-            'anxious': '😰',
-            'excited': '🤩',
-            'neutral': '😐'
-        };
-        return emojis[tone] || '😐';
-    }
-
-    detectEmotionalTone(text) {
-        const lowerText = text.toLowerCase();
-        
-        // Enhanced tone detection with more keywords
-        const tonePatterns = {
-            happy: ['happy', 'joy', 'excited', 'great', 'wonderful', 'amazing', 'love', '❤️', '😊', '😄', '🎉'],
-            sad: ['sad', 'depressed', 'lonely', 'miss', 'cry', 'tears', '😢', '😭', '💔'],
-            angry: ['angry', 'mad', 'furious', 'hate', 'annoyed', 'frustrated', '😠', '😡', '💢'],
-            anxious: ['anxious', 'worried', 'nervous', 'scared', 'afraid', 'stress', '😰', '😨', '😱'],
-            excited: ['excited', 'thrilled', 'ecstatic', 'amazing', 'incredible', '🤩', '✨', '🔥']
-        };
-        
-        for (const [tone, patterns] of Object.entries(tonePatterns)) {
-            if (patterns.some(pattern => lowerText.includes(pattern))) {
-                return {
-                    type: tone,
-                    description: this.getToneDescription(tone)
-                };
-            }
-        }
-        
-        return {
-            type: 'neutral',
-            description: 'Neutral tone detected'
-        };
-    }
-
-    getToneDescription(tone) {
-        const descriptions = {
-            happy: 'Happy and positive',
-            sad: 'Feeling down',
-            angry: 'Frustrated or upset',
-            anxious: 'Worried or nervous',
-            excited: 'Very excited!',
-            neutral: 'Calm and neutral'
-        };
-        return descriptions[tone] || 'Neutral tone';
+    hideError() {
+        document.getElementById('error-message').style.display = 'none';
     }
 
     updateCharCount(count) {
         const charCount = document.getElementById('char-count');
-        if (charCount) {
-            charCount.textContent = `${count}/500`;
-            charCount.className = count > 450 ? 'char-count warning' : 'char-count';
+        charCount.textContent = `${count}/500`;
+        charCount.classList.toggle('warning', count > 450);
+    }
+
+    setupSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            this.speechRecognition = new SpeechRecognition();
+            this.speechRecognition.continuous = false;
+            this.speechRecognition.interimResults = false;
+            this.speechRecognition.lang = 'en-US';
+
+            this.speechRecognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('message-input').value = transcript;
+                this.stopRecording();
+                this.sendMessage();
+            };
+
+            this.speechRecognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                this.showError('Sorry, I couldn\'t understand that. Please try again.');
+                this.stopRecording();
+            };
+
+            this.speechRecognition.onend = () => {
+                if (this.isRecording) {
+                    this.stopRecording();
+                }
+            };
+        } else {
+            document.getElementById('voice-btn').style.display = 'none';
+            console.warn('Speech Recognition API not supported in this browser.');
         }
     }
 
-    autoResizeTextarea(textarea) {
-        if (textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    toggleRecording() {
+        if (this.isRecording) {
+            this.stopRecording();
+        } else {
+            this.startRecording();
         }
     }
 
-    clearConversation() {
-        if (confirm('Are you sure you want to clear this conversation?')) {
-            this.conversationHistory = [];
-            this.currentConversationId = null;
-            
-            const messagesArea = document.getElementById('messages-area');
-            if (messagesArea) {
-                messagesArea.innerHTML = '';
-            }
-            
-            // Show goal welcome message again
-            if (this.currentGoal) {
-                this.showGoalWelcome(this.currentGoal);
-            }
+    startRecording() {
+        if (this.speechRecognition) {
+            this.isRecording = true;
+            this.speechRecognition.start();
+            document.getElementById('recording-indicator').style.display = 'flex';
+            document.getElementById('voice-btn').classList.add('recording');
         }
+    }
+
+    stopRecording() {
+        if (this.speechRecognition && this.isRecording) {
+            this.isRecording = false;
+            this.speechRecognition.stop();
+            document.getElementById('recording-indicator').style.display = 'none';
+            document.getElementById('voice-btn').classList.remove('recording');
+        }
+    }
+
+    toggleVoiceOutput(enabled) {
+        this.voiceEnabled = enabled;
+        if (!enabled) {
+            this.speechSynthesis.cancel();
+        }
+    }
+
+    loadVoices() {
+        if (this.speechSynthesis.onvoiceschanged !== undefined) {
+            this.speechSynthesis.onvoiceschanged = () => {
+                this.voices = this.speechSynthesis.getVoices();
+            };
+        }
+        this.voices = this.speechSynthesis.getVoices();
+    }
+
+    speak(text) {
+        if (this.speechSynthesis.speaking) {
+            this.speechSynthesis.cancel();
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Enhanced voice selection for a calmer experience
+        const preferredVoices = [
+            { name: 'Google US English', gender: 'female' },
+            { name: 'Microsoft Zira Desktop - English (United States)', gender: 'female' },
+            { name: 'Samantha', gender: 'female' }, // Common on Apple devices
+        ];
+
+        let selectedVoice = null;
+
+        // Try to find a preferred voice
+        for (const preferred of preferredVoices) {
+            selectedVoice = this.voices.find(voice => voice.name === preferred.name && (!preferred.gender || voice.gender === preferred.gender));
+            if (selectedVoice) break;
+        }
+
+        // Fallback to other local female voices
+        if (!selectedVoice) {
+            selectedVoice = this.voices.find(voice => voice.lang.startsWith('en') && voice.gender === 'female' && voice.localService);
+        }
+
+        // Final fallback to any local voice or the first available voice
+        if (!selectedVoice) {
+            selectedVoice = this.voices.find(voice => voice.localService) || this.voices[0];
+        }
+
+        utterance.voice = selectedVoice;
+        utterance.pitch = 1.0; // Natural pitch
+        utterance.rate = 0.9; // Slightly slower rate for a calming effect
+
+        this.speechSynthesis.speak(utterance);
+    }
+
+    // Custom Goal Methods
+    showCustomGoalModal() {
+        document.getElementById('custom-goal-modal').style.display = 'block';
+    }
+
+    hideCustomGoalModal() {
+        document.getElementById('custom-goal-modal').style.display = 'none';
+    }
+
+    saveCustomGoal() {
+        const input = document.getElementById('custom-goal-input');
+        const goalText = input.value.trim();
+        if (goalText) {
+            let customGoals = JSON.parse(localStorage.getItem('customGoals') || '[]');
+            if (!customGoals.includes(goalText)) {
+                customGoals.push(goalText);
+                localStorage.setItem('customGoals', JSON.stringify(customGoals));
+                this.addGoalButton(goalText, true);
+            }
+            this.selectGoal(goalText);
+            this.hideCustomGoalModal();
+            input.value = '';
+        }
+    }
+
+    loadGoals() {
+        const goalOptions = document.getElementById('goal-options');
+        // Clear existing custom goals
+        goalOptions.querySelectorAll('.custom-goal').forEach(btn => btn.remove());
+
+        const customGoals = JSON.parse(localStorage.getItem('customGoals') || '[]');
+        customGoals.forEach(goal => {
+            this.addGoalButton(goal, true);
+        });
+    }
+
+    addGoalButton(goal, isCustom) {
+        const goalOptions = document.getElementById('goal-options');
+        const button = this.createGoalButton(goal, isCustom);
+        // Insert custom goals before the 'Create Your Own' button
+        goalOptions.insertBefore(button, document.getElementById('create-goal-btn'));
+    }
+
+    createGoalButton(goal, isCustom) {
+        const button = document.createElement('button');
+        button.className = 'goal-btn';
+        if (isCustom) {
+            button.classList.add('custom-goal');
+        }
+        button.dataset.goal = goal;
+        button.innerHTML = `
+            <span class="goal-icon">✨</span>
+            <div class="goal-content">
+                <h4>${this.escapeHtml(goal)}</h4>
+                <p>Custom goal</p>
+            </div>
+        `;
+        button.addEventListener('click', () => this.selectGoal(goal));
+        return button;
     }
 }
 
-// Initialize the chat when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new CalmCompanionChat();
-});
-
-// Add performance monitoring
-if ('performance' in window) {
-    window.addEventListener('load', () => {
-        const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-        console.log(`Page loaded in ${loadTime}ms`);
-    });
-}
+document.addEventListener('DOMContentLoaded', () => new CalmCompanionChat());

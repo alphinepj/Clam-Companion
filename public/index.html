@@ -62,7 +62,7 @@
 
                 <div class="goal-section" id="goal-section">
                     <h3>What would you like to work on today?</h3>
-                    <div class="goal-options">
+                    <div class="goal-options" id="goal-options">
                         <button class="goal-btn" data-goal="emotional-support">
                             <span class="goal-icon">💙</span>
                             <div class="goal-content">
@@ -98,6 +98,13 @@
                                 <p>Learn polite Japanese phrases</p>
                             </div>
                         </button>
+                        <button class="goal-btn" id="create-goal-btn">
+                            <span class="goal-icon">✨</span>
+                            <div class="goal-content">
+                                <h4>Create Your Own</h4>
+                                <p>Set a custom conversation goal</p>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
@@ -127,10 +134,20 @@
                     </div>
                 </div>
                 
-                <!-- Emotional Tone Indicator -->
-                <div class="tone-indicator" id="tone-indicator">
-                    <span class="tone-emoji" id="tone-emoji">😊</span>
-                    <span class="tone-text" id="tone-text">Ready to chat</span>
+                <div class="chat-header-right">
+                    <!-- Voice Output Toggle -->
+                    <div class="voice-toggle-container">
+                        <span class="voice-toggle-label">AI Voice</span>
+                        <label class="switch">
+                            <input type="checkbox" id="voice-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <!-- Emotional Tone Indicator -->
+                    <div class="tone-indicator" id="tone-indicator">
+                        <span class="tone-emoji" id="tone-emoji">😊</span>
+                        <span class="tone-text" id="tone-text">Ready to chat</span>
+                    </div>
                 </div>
             </div>
 
@@ -156,9 +173,16 @@
                         rows="1"
                         maxlength="500"
                     ></textarea>
+                    <button id="voice-btn" class="voice-btn" title="Start Recording">
+                        <span class="voice-icon">🎤</span>
+                    </button>
                     <button id="send-btn" onclick="sendMessage()" title="Send Message">
                         <span class="send-icon">📤</span>
                     </button>
+                    <div class="recording-indicator" id="recording-indicator" style="display: none;">
+                        <div class="recording-dot"></div>
+                        <span>Recording...</span>
+                    </div>
                 </div>
                 <div class="input-footer">
                     <span class="char-count" id="char-count">0/500</span>
@@ -193,6 +217,17 @@
                 <span class="error-icon">⚠️</span>
                 <span class="error-text" id="error-text"></span>
                 <button class="error-close" onclick="hideError()">×</button>
+            </div>
+        </div>
+
+        <!-- Custom Goal Modal -->
+        <div class="modal" id="custom-goal-modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-modal-btn">&times;</span>
+                <h3>Create a Custom Goal</h3>
+                <p>Describe what you want to focus on in your conversation.</p>
+                <input type="text" id="custom-goal-input" placeholder="e.g., Practice expressing gratitude">
+                <button id="save-goal-btn" class="primary-btn">Save and Start</button>
             </div>
         </div>
     </div>

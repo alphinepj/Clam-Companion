@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Meditation | Calm Companion</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>🌿 Calm Companion</h1>
+                <div class="user-info">
+                    <span id="user-email"></span>
+                    <a href="index.html" class="profile-link">Chat</a>
+                    <a href="profile.html" class="profile-link">Profile</a>
+                    <button onclick="logout()" class="logout-btn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Group Meditation Content -->
+        <div class="group-meditation-container">
+            <div class="session-selection">
+                <h2>Group Meditation Sessions</h2>
+                <div class="create-session">
+                    <input type="text" id="session-name" placeholder="Enter new session name">
+                    <button id="create-session-btn" class="primary-btn">Create Session</button>
+                </div>
+                <div class="session-list-container">
+                    <h3>Available Sessions</h3>
+                    <ul id="session-list"></ul>
+                </div>
+            </div>
+
+            <div class="meditation-session" style="display: none;">
+                <h2 id="current-session-name"></h2>
+                <div id="participants-container">
+                    <h3>Participants</h3>
+                    <ul id="participants"></ul>
+                </div>
+                <div class="timer-section">
+                    <div class="timer-display" id="timer-display">00:00</div>
+                    <div class="timer-label" id="timer-label">Waiting for host to start...</div>
+                </div>
+                <button id="leave-session-btn" class="secondary-btn">Leave Session</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="group.js"></script>
+</body>
+</html>
