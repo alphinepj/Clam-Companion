@@ -1,4 +1,4 @@
-// server/server.js - Enhanced Calm Companion Chat App Server v2.3.0
+// server/server.js - Enhanced Calm Companion Chat App Server v3.1.0 (with Firebase & Settings)
 
 const express = require('express');
 const cors = require('cors');
@@ -11,11 +11,12 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const winston = require('winston');
 require('dotenv').config();
+const { admin, db } = require('./firebase'); // Import Firebase config
 const { calmCompanionFlow, toneAnalysisFlow, languageDetectionFlow } = require('./gemini');
 const { generateOpenAIResponse } = require('./openai');
 const { generateAnthropicResponse } = require('./anthropic');
 
-// Configure logging
+// Configure logging (same as before)
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -40,7 +41,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-// ✅ Security Middleware
+// Security, Compression, CORS, Rate Limiting Middleware (same as before)
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -53,11 +54,7 @@ app.use(helmet({
   },
   crossOriginEmbedderPolicy: false
 }));
-
-// ✅ Compression middleware for better performance
 app.use(compression());
-
-// ✅ CORS configuration with enhanced security
 app.use(cors({
   origin: NODE_ENV === 'production' 
     ? ['https://yourdomain.com'] 
@@ -65,13 +62,11 @@ app.use(cors({
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  maxAge: 86400 // 24 hours
+  maxAge: 86400
 }));
-
-// ✅ Rate limiting with enhanced configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: '15 minutes'
@@ -86,24 +81,16 @@ const limiter = rateLimit({
     });
   }
 });
-
 app.use('/api/', limiter);
-
-// ✅ Request logging
-app.use(morgan('combined', {
-  stream: {
-    write: (message) => logger.info(message.trim())
-  }
-}));
-
+app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// ✅ In-memory "database" (will be upgraded to MongoDB)
-const users = [];
-const conversations = [];
+// --- Firebase Integration ---
+const usersCollection = db.collection('users');
+const conversationsCollection = db.collection('conversations');
 
-// ✅ JWT Authentication Middleware with enhanced error handling
+// JWT Authentication Middleware (same as before)
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -129,7 +116,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// ✅ Input validation middleware
+// Input validation middleware (same as before)
 const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -139,290 +126,213 @@ const validatePassword = (password) => {
   return password && password.length >= 6;
 };
 
-// ✅ Register Route with enhanced validation
+// Register Route (with Firebase)
 app.post('/api/register', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email and password are required',
-        code: 'VALIDATION_ERROR'
-      });
+    if (!email || !password || !validateEmail(email) || !validatePassword(password)) {
+      return res.status(400).json({ error: 'Invalid email or password format', code: 'VALIDATION_ERROR' });
     }
 
-    if (!validateEmail(email)) {
-      return res.status(400).json({ 
-        error: 'Please enter a valid email address',
-        code: 'INVALID_EMAIL'
-      });
-    }
-
-    if (!validatePassword(password)) {
-      return res.status(400).json({ 
-        error: 'Password must be at least 6 characters long',
-        code: 'WEAK_PASSWORD'
-      });
-    }
-
-    const userExists = users.find(u => u.email === email);
-    if (userExists) {
-      logger.warn('Registration attempt with existing email', { email });
-      return res.status(400).json({ 
-        error: 'User already exists',
-        code: 'USER_EXISTS'
-      });
+    const userSnapshot = await usersCollection.where('email', '==', email).get();
+    if (!userSnapshot.empty) {
+      return res.status(400).json({ error: 'User already exists', code: 'USER_EXISTS' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const newUser = { 
-      id: Date.now().toString(),
-      email, 
+    const newUserRef = await usersCollection.add({
+      email,
       password: hashedPassword,
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      conversationCount: 0
-    };
+      conversationCount: 0,
+      settings: {
+        defaultModel: 'gemini',
+        defaultVoiceOutput: false
+      }
+    });
 
-    users.push(newUser);
-    
     const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email },
+      { userId: newUserRef.id, email },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
 
-    logger.info('New user registered', { email: newUser.email });
-    
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        createdAt: newUser.createdAt
-      }
-    });
+    logger.info('New user registered', { email });
+    res.status(201).json({ message: 'User registered successfully', token });
   } catch (err) {
     logger.error('Registration error', { error: err.message, stack: err.stack });
-    res.status(500).json({ 
-      error: 'Server error during registration',
-      code: 'SERVER_ERROR'
-    });
+    res.status(500).json({ error: 'Server error during registration', code: 'SERVER_ERROR' });
   }
 });
 
-// ✅ Login Route with enhanced security
+// Login Route (with Firebase)
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    
     if (!email || !password) {
-      return res.status(400).json({ 
-        error: 'Email and password are required',
-        code: 'VALIDATION_ERROR'
-      });
+      return res.status(400).json({ error: 'Email and password are required', code: 'VALIDATION_ERROR' });
     }
 
-    const user = users.find(u => u.email === email);
-    if (!user) {
-      logger.warn('Login attempt with non-existent email', { email });
-      return res.status(401).json({ 
-        error: 'Invalid credentials',
-        code: 'INVALID_CREDENTIALS'
-      });
+    const userSnapshot = await usersCollection.where('email', '==', email).get();
+    if (userSnapshot.empty) {
+      return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
     }
+
+    const userDoc = userSnapshot.docs[0];
+    const user = userDoc.data();
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      logger.warn('Login attempt with wrong password', { email });
-      return res.status(401).json({ 
-        error: 'Invalid credentials',
-        code: 'INVALID_CREDENTIALS'
-      });
+      return res.status(401).json({ error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' });
     }
 
-    // Update last login
-    user.lastLogin = new Date().toISOString();
+    await usersCollection.doc(userDoc.id).update({ lastLogin: new Date().toISOString() });
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      { userId: userDoc.id, email: user.email },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '7d' }
     );
 
     logger.info('User logged in successfully', { email: user.email });
-    
-    res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        lastLogin: user.lastLogin
-      }
-    });
+    res.json({ message: 'Login successful', token });
   } catch (err) {
     logger.error('Login error', { error: err.message, stack: err.stack });
-    res.status(500).json({ 
-      error: 'Server error during login',
-      code: 'SERVER_ERROR'
-    });
+    res.status(500).json({ error: 'Server error during login', code: 'SERVER_ERROR' });
   }
 });
 
-// ✅ Chat Route with multi-language support
+// Chat Route (with Firebase)
 app.post('/api/chat', authenticateToken, async (req, res) => {
   try {
-    const { message, goal, tone, language, conversationId, aiProvider } = req.body;
-    
+    const { message, goal, conversationId } = req.body;
     if (!message || !goal) {
-      return res.status(400).json({ 
-        error: 'Message and goal are required',
-        code: 'VALIDATION_ERROR'
-      });
+      return res.status(400).json({ error: 'Message and goal are required', code: 'VALIDATION_ERROR' });
     }
 
-    const user = users.find(u => u.id === req.user.userId);
-    if (!user) {
-      return res.status(404).json({ 
-        error: 'User not found',
-        code: 'USER_NOT_FOUND'
-      });
-    }
-
-    // Find or create conversation
-    let conversation = conversations.find(c => c.id === conversationId);
-    if (!conversation) {
-      conversation = {
-        id: Date.now().toString(),
-        userId: req.user.userId,
-        goal,
-        messages: [],
-        createdAt: new Date().toISOString()
-      };
-      conversations.push(conversation);
-      user.conversationCount++;
+    let conversationRef;
+    if (conversationId) {
+      conversationRef = conversationsCollection.doc(conversationId);
+    } else {
+      conversationRef = conversationsCollection.doc();
+      await usersCollection.doc(req.user.userId).update({ conversationCount: admin.firestore.FieldValue.increment(1) });
     }
     
-    let detectedLanguage = language;
-    if (!detectedLanguage) {
-        const langResult = await languageDetectionFlow.run({ message });
-        detectedLanguage = langResult.language;
-    }
+    const userMessage = { role: 'user', content: message, timestamp: new Date().toISOString() };
+    await conversationRef.collection('messages').add(userMessage);
+
+    const conversationSnapshot = await conversationRef.get();
+    const conversationData = conversationSnapshot.data() || { goal, userId: req.user.userId, createdAt: new Date().toISOString() };
     
-    let detectedTone = tone;
-    if (!detectedTone) {
-        const toneResult = await toneAnalysisFlow.run({ message, language: detectedLanguage });
-        detectedTone = toneResult.tone;
+    // Get last 10 messages for context
+    const messagesSnapshot = await conversationRef.collection('messages').orderBy('timestamp', 'desc').limit(10).get();
+    const conversationHistory = messagesSnapshot.docs.map(doc => doc.data()).reverse();
+
+    const userDoc = await usersCollection.doc(req.user.userId).get();
+    const userSettings = userDoc.data().settings || {};
+    const preferredProvider = userSettings.defaultModel || 'gemini';
+
+    const aiResponse = await generateAIResponse(message, goal, 'neutral', conversationHistory, 'en', preferredProvider);
+    const aiMessage = { role: 'assistant', content: aiResponse.response, timestamp: new Date().toISOString() };
+    await conversationRef.collection('messages').add(aiMessage);
+    
+    if (!conversationSnapshot.exists) {
+        await conversationRef.set(conversationData);
     }
 
-    // Add user message
-    const userMessage = {
-      role: 'user',
-      content: message,
-      timestamp: new Date().toISOString(),
-      tone: detectedTone,
-      language: detectedLanguage
-    };
-    conversation.messages.push(userMessage);
-
-    // Generate AI response
-    const aiResponse = await generateAIResponse(message, goal, detectedTone, conversation.messages, detectedLanguage, aiProvider);
-    
-    // Add AI message
-    const aiMessage = {
-      role: 'assistant',
-      content: aiResponse.response,
-      timestamp: new Date().toISOString(),
-      tone: aiResponse.tone,
-      language: detectedLanguage
-    };
-    conversation.messages.push(aiMessage);
-
-    logger.info('Chat message processed', { 
-      userId: req.user.userId, 
-      goal, 
-      messageLength: message.length,
-      aiProvider: aiResponse.aiProvider,
-      language: detectedLanguage
-    });
-
-    res.json({
-      response: aiResponse.response,
-      conversationId: conversation.id,
-      tone: aiResponse.tone,
-      language: detectedLanguage,
-      aiProvider: aiResponse.aiProvider
-    });
+    res.json({ response: aiResponse.response, conversationId: conversationRef.id });
   } catch (err) {
     logger.error('Chat error', { error: err.message, stack: err.stack });
-    res.status(500).json({ 
-      error: 'Server error during chat',
-      code: 'SERVER_ERROR'
-    });
+    res.status(500).json({ error: 'Server error during chat', code: 'SERVER_ERROR' });
   }
 });
 
-// ✅ Get User Profile with enhanced data
-app.get('/api/profile', authenticateToken, (req, res) => {
+// Get User Profile (with Firebase)
+app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
-    const user = users.find(u => u.id === req.user.userId);
-    if (!user) {
-      return res.status(404).json({ 
-        error: 'User not found',
-        code: 'USER_NOT_FOUND'
-      });
+    const userDoc = await usersCollection.doc(req.user.userId).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
     }
+    const user = userDoc.data();
 
-    const userConversations = conversations.filter(c => c.userId === req.user.userId);
-    
+    const conversationsSnapshot = await conversationsCollection.where('userId', '==', req.user.userId).get();
+    const totalMessages = (await Promise.all(conversationsSnapshot.docs.map(async doc => (await doc.ref.collection('messages').get()).size))).reduce((a, b) => a + b, 0);
+
     res.json({
       email: user.email,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
       conversationCount: user.conversationCount,
-      totalMessages: userConversations.reduce((sum, conv) => sum + conv.messages.length, 0),
-      favoriteGoal: getFavoriteGoal(userConversations),
-      daysActive: Math.ceil((new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24))
+      totalMessages
     });
   } catch (err) {
     logger.error('Profile error', { error: err.message, stack: err.stack });
-    res.status(500).json({ 
-      error: 'Server error fetching profile',
-      code: 'SERVER_ERROR'
-    });
+    res.status(500).json({ error: 'Server error fetching profile', code: 'SERVER_ERROR' });
   }
 });
 
-// ✅ Get Conversation History with pagination
-app.get('/api/conversations', authenticateToken, (req, res) => {
+// Get User Settings
+app.get('/api/settings', authenticateToken, async (req, res) => {
+  try {
+    const userDoc = await usersCollection.doc(req.user.userId).get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
+    }
+    const user = userDoc.data();
+    res.json(user.settings || { defaultModel: 'gemini', defaultVoiceOutput: false });
+  } catch (err) {
+    logger.error('Settings GET error', { error: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Server error fetching settings', code: 'SERVER_ERROR' });
+  }
+});
+
+// Update User Settings
+app.post('/api/settings', authenticateToken, async (req, res) => {
+  try {
+    const { defaultModel, defaultVoiceOutput } = req.body;
+    const settings = {
+      defaultModel: defaultModel || 'gemini',
+      defaultVoiceOutput: defaultVoiceOutput || false
+    };
+    await usersCollection.doc(req.user.userId).update({ settings });
+    res.json({ message: 'Settings updated successfully' });
+  } catch (err) {
+    logger.error('Settings POST error', { error: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Server error updating settings', code: 'SERVER_ERROR' });
+  }
+});
+
+// Get Conversation History (with Firebase)
+app.get('/api/conversations', authenticateToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const offset = (page - 1) * limit;
+    
+    const conversationsSnapshot = await conversationsCollection
+        .where('userId', '==', req.user.userId)
+        .orderBy('createdAt', 'desc')
+        .limit(limit)
+        .offset((page - 1) * limit)
+        .get();
 
-    const userConversations = conversations
-      .filter(c => c.userId === req.user.userId)
-      .map(c => ({
-        id: c.id,
-        goal: c.goal,
-        messageCount: c.messages.length,
-        createdAt: c.createdAt,
-        lastMessage: c.messages[c.messages.length - 1]?.timestamp
-      }))
-      .sort((a, b) => new Date(b.lastMessage) - new Date(a.lastMessage));
+    const conversations = conversationsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
 
-    const paginatedConversations = userConversations.slice(offset, offset + limit);
+    const totalConversations = (await conversationsCollection.where('userId', '==', req.user.userId).get()).size;
 
     res.json({
-      conversations: paginatedConversations,
-      pagination: {
-        page,
-        limit,
-        total: userConversations.length,
-        totalPages: Math.ceil(userConversations.length / limit)
-      }
+        conversations,
+        pagination: {
+            page,
+            limit,
+            total: totalConversations,
+            totalPages: Math.ceil(totalConversations / limit)
+        }
     });
   } catch (err) {
     logger.error('Conversations error', { error: err.message, stack: err.stack });
@@ -433,37 +343,27 @@ app.get('/api/conversations', authenticateToken, (req, res) => {
   }
 });
 
-// ✅ Health check endpoint
+// Health check and other routes (same as before)
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: '2.3.0',
+    version: '3.1.0',
     environment: NODE_ENV,
     uptime: process.uptime(),
     memory: process.memoryUsage()
   });
 });
 
-// ✅ Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: '🌿 Calm Companion Chat App API v2.3.0',
+    message: '🌿 Calm Companion Chat App API v3.1.0',
     status: 'running',
-    version: '2.3.0',
-    environment: NODE_ENV,
-    endpoints: {
-      health: '/api/health',
-      register: 'POST /api/register',
-      login: 'POST /api/login',
-      chat: 'POST /api/chat',
-      profile: 'GET /api/profile',
-      conversations: 'GET /api/conversations'
-    }
+    version: '3.1.0',
+    environment: NODE_ENV
   });
 });
 
-// ✅ 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
@@ -472,7 +372,6 @@ app.use('*', (req, res) => {
   });
 });
 
-// ✅ Global error handler
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', { 
     error: err.message, 
@@ -487,19 +386,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ Helper function to get favorite goal
-function getFavoriteGoal(conversations) {
-  const goalCounts = {};
-  conversations.forEach(conv => {
-    goalCounts[conv.goal] = (goalCounts[conv.goal] || 0) + 1;
-  });
-  
-  return Object.keys(goalCounts).reduce((a, b) => 
-    goalCounts[a] > goalCounts[b] ? a : b, 'emotional-support'
-  );
-}
 
-// ✅ AI Response Generation with smart fallbacks and multi-language support
+// AI Response Generation (same as before)
 async function generateAIResponse(message, goal, tone, conversationHistory, language, preferredProvider) {
   const providers = {
     openai: generateOpenAIResponse,
@@ -532,17 +420,15 @@ async function generateAIResponse(message, goal, tone, conversationHistory, lang
   };
 }
 
-
-// ✅ Start server with enhanced error handling
+// Start server and graceful shutdown (same as before)
 const server = app.listen(PORT, () => {
-  logger.info(`🌿 Calm Companion Server v2.3.0 running on port ${PORT}`, {
+  logger.info(`🌿 Calm Companion Server v3.1.0 running on port ${PORT}`, {
     port: PORT,
     environment: NODE_ENV,
     timestamp: new Date().toISOString()
   });
 });
 
-// ✅ Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully');
   server.close(() => {
