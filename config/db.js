@@ -22,17 +22,14 @@ const logger = winston.createLogger({
   ]
 });
 
-const db = process.env.MONGO_URI || 'mongodb://localhost:27017/mindfulness_app';
+const db = process.env.MONGODB_URI || 'mongodb://localhost:27017/calm_companion';
 
 // MongoDB connection options for optimization
 const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   maxPoolSize: 10, // Maximum number of connections in the pool
   minPoolSize: 2,  // Minimum number of connections in the pool
   serverSelectionTimeoutMS: 5000, // Timeout for server selection
   socketTimeoutMS: 45000, // Socket timeout
-  bufferMaxEntries: 0, // Disable mongoose buffering
   bufferCommands: false, // Disable mongoose buffering
   maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
   retryWrites: true,

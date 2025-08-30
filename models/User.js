@@ -103,8 +103,7 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Indexes for better query performance
-UserSchema.index({ email: 1 });
+// Indexes for better query performance (email index is automatically created by unique: true)
 UserSchema.index({ createdAt: -1 });
 UserSchema.index({ lastLogin: -1 });
 UserSchema.index({ 'stats.totalMinutes': -1 });
